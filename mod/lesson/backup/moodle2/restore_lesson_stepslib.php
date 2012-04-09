@@ -34,6 +34,10 @@ class restore_lesson_activity_structure_step extends restore_activity_structure_
     // end of the lesson
     protected $answers = array();
 
+    //Need to store lesson_attempts until after_exeute() b/c answers have not been inserted at process_lesson_attempt
+    //execution. MDL-32061
+    protected $attempts = array();
+
     protected function define_structure() {
 
         $paths = array();
@@ -103,6 +107,10 @@ class restore_lesson_activity_structure_step extends restore_activity_structure_
         $data->timemodified = $this->apply_date_offset($data->timemodified);
         $data->timecreated = $this->apply_date_offset($data->timecreated);
 
+        //Set a dummy mapping only to get the old id in process_lesson_attempt
+        //The correct answer id will not be mapped or needed until after_execute()
+        $this->set_mapping('lesson_answer', $data->id, 0);
+
         // Answers need to be processed in order, so we store them in an
         // instance variable and insert them in the after_execute stage
         $this->answers[$data->id] = $data;
@@ -115,11 +123,15 @@ class restore_lesson_activity_structure_step extends restore_activity_structure_
         $oldid = $data->id;
         $data->lessonid = $this->get_new_parentid('lesson');
         $data->pageid = $this->get_new_parentid('lesson_page');
-        $data->answerid = $this->get_new_parentid('lesson_answer');
+
+        //Get the old answer id stored now so that it can be used later in after_execute
+        //The answerid is not part of backup schema. MDL-32061
+        $data->answerid = $this->get_old_parentid('lesson_answer');
         $data->userid = $this->get_mappingid('user', $data->userid);
         $data->timeseen = $this->apply_date_offset($data->timeseen);
 
-        $newitemid = $DB->insert_record('lesson_attempts', $data);
+        //Store the the lesson attempt. MDL-32061
+        $this->attempts[] = $data;
     }
 
     protected function process_lesson_grade($data) {
@@ -181,6 +193,12 @@ class restore_lesson_activity_structure_step extends restore_activity_structure_
         foreach ($this->answers as $answer) {
             $newitemid = $DB->insert_record('lesson_answers', $answer);
             $this->set_mapping('lesson_answer', $answer->id, $newitemid);
+        }
+
+        //Now the attempts, if there are any. MDL-32061
+        foreach ($this->attempts as $attempt) {
+            $attempt->answerid = $this->get_mappingid('lesson_answer', $attempt->answerid);
+            $newitemid = $DB->insert_record('lesson_attempts', $attempt);
         }
 
         // Add lesson mediafile, no need to match by itemname (just internally handled context)

@@ -194,7 +194,8 @@ class moodle1_mod_assignment_handler extends moodle1_mod_handler {
         }
 
         if (!isset($this->subpluginhandlers[$subplugin])) {
-            throw new moodle1_convert_exception('unsupported_subplugin', 'assignment_'.$subplugin);
+            // Generic handling, prevents breaking conversion process...
+            $this->subpluginhandlers[$subplugin] = new moodle1_assignment_subplugin_handler($this, $subplugin);
         }
 
         return $this->subpluginhandlers[$subplugin];
@@ -206,7 +207,7 @@ class moodle1_mod_assignment_handler extends moodle1_mod_handler {
  * Base class for the assignment subplugin handler
  * Extend this for your own subplugin conversion handling purposes.
  */
-abstract class moodle1_assignment_subplugin_handler extends moodle1_submod_handler {
+class moodle1_assignment_subplugin_handler extends moodle1_submod_handler {
 
     /**
      * @param moodle1_mod_handler $assignmenthandler the handler of a module we are subplugin of

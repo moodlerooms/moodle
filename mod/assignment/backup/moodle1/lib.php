@@ -195,7 +195,7 @@ class moodle1_mod_assignment_handler extends moodle1_mod_handler {
 
         if (!isset($this->subpluginhandlers[$subplugin])) {
             // Generic handling, prevents breaking conversion process...
-            $this->subpluginhandlers[$subplugin] = new moodle1_assignment_subplugin_handler($this, $subplugin);
+            $this->subpluginhandlers[$subplugin] = new moodle1_assignment_unsupported_subplugin_handler($this, $subplugin);
         }
 
         return $this->subpluginhandlers[$subplugin];
@@ -207,7 +207,7 @@ class moodle1_mod_assignment_handler extends moodle1_mod_handler {
  * Base class for the assignment subplugin handler
  * Extend this for your own subplugin conversion handling purposes.
  */
-class moodle1_assignment_subplugin_handler extends moodle1_submod_handler {
+abstract class moodle1_assignment_subplugin_handler extends moodle1_submod_handler {
 
     /**
      * @param moodle1_mod_handler $assignmenthandler the handler of a module we are subplugin of
@@ -237,4 +237,10 @@ class moodle1_assignment_subplugin_handler extends moodle1_submod_handler {
 
         //you will probably want to do stuff with $this->xmlwriter here (within your overridden method) to write plugin specific data.
     }
+}
+
+/**
+ * This class handles subplugins that do not exist or that are not supported
+ */
+class moodle1_assignment_unsupported_subplugin_handler extends moodle1_assignment_subplugin_handler {
 }

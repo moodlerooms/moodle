@@ -325,7 +325,7 @@ function lti_build_request($instance, $typeconfig, $course) {
 }
 
 function lti_get_tool_table($tools, $id) {
-    global $CFG, $USER;
+    global $CFG, $USER, $OUTPUT;
     $html = '';
 
     $typename = get_string('typename', 'lti');
@@ -351,6 +351,10 @@ function lti_get_tool_table($tools, $id) {
                 </thead>
         ";
 
+        $clearicon  = $OUTPUT->pix_url('t/clear');
+        $editicon   = $OUTPUT->pix_url('t/edit');
+        $deleteicon = $OUTPUT->pix_url('t/delete');
+
         foreach ($tools as $type) {
             $date = userdate($type->timecreated);
             $accept = get_string('accept', 'lti');
@@ -359,7 +363,7 @@ function lti_get_tool_table($tools, $id) {
 
             $accepthtml = "
                 <a class=\"editing_accept\" href=\"{$CFG->wwwroot}/mod/lti/typessettings.php?action=accept&amp;id={$type->id}&amp;sesskey={$USER->sesskey}&amp;tab={$id}\" title=\"{$accept}\">
-                    <img class=\"iconsmall\" alt=\"{$accept}\" src=\"{$CFG->wwwroot}/pix/t/clear.gif\"/>
+                    <img class=\"iconsmall\" alt=\"{$accept}\" src=\"$clearicon\"/>
                 </a>
             ";
 
@@ -388,10 +392,10 @@ function lti_get_tool_table($tools, $id) {
                 <td align=\"center\">
                     {$accepthtml}
                     <a class=\"editing_update\" href=\"{$CFG->wwwroot}/mod/lti/typessettings.php?action=update&amp;id={$type->id}&amp;sesskey={$USER->sesskey}&amp;tab={$id}\" title=\"{$update}\">
-                        <img class=\"iconsmall\" alt=\"{$update}\" src=\"{$CFG->wwwroot}/pix/t/edit.gif\"/>
+                        <img class=\"iconsmall\" alt=\"{$update}\" src=\"$editicon\"/>
                     </a>
                     <a class=\"editing_delete\" href=\"{$CFG->wwwroot}/mod/lti/typessettings.php?action={$deleteaction}&amp;id={$type->id}&amp;sesskey={$USER->sesskey}&amp;tab={$id}\" title=\"{$delete}\">
-                        <img class=\"iconsmall\" alt=\"{$delete}\" src=\"{$CFG->wwwroot}/pix/t/delete.gif\"/>
+                        <img class=\"iconsmall\" alt=\"{$delete}\" src=\"$deleteicon\"/>
                     </a>
                 </td>
             </tr>

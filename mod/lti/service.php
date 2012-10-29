@@ -148,10 +148,16 @@ switch ($messagetype) {
         $data = new stdClass();
         $data->body = $rawbody;
         $data->xml = $xml;
+        $data->messageid = lti_parse_message_id($xml);
         $data->messagetype = $messagetype;
         $data->consumerkey = $consumerkey;
         $data->sharedsecret = $sharedsecret;
 
+        // Before firing the event, allow subplugins a chance to handle
+        if (lti_extend_lti_services($data)) {
+            break;
+        }
+        
         //If an event handler handles the web service, it should set this global to true
         //So this code knows whether to send an "operation not supported" or not.
         global $lti_web_service_handled;

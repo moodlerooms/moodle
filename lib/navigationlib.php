@@ -3542,6 +3542,11 @@ class settings_navigation extends navigation_node {
             $coursenode->add(get_string('reset'), $url, self::TYPE_SETTING, null, null, new pix_icon('i/return', ''));
         }
 
+        // Tools
+        foreach (get_plugin_list_with_function('tool', 'extend_settings_navigation') as $function) {
+            call_user_func($function, $coursenode, $coursecontext);
+        }
+
         // Questions
         require_once($CFG->libdir . '/questionlib.php');
         question_extend_settings_navigation($coursenode, $coursecontext)->trim_if_empty();

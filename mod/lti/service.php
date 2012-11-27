@@ -24,6 +24,8 @@
  * @author     Chris Scribner
  */
 
+define('NO_DEBUG_DISPLAY', true);
+
 require_once(dirname(__FILE__) . "/../../config.php");
 require_once($CFG->dirroot.'/mod/lti/locallib.php');
 require_once($CFG->dirroot.'/mod/lti/servicelib.php');
@@ -157,7 +159,7 @@ switch ($messagetype) {
         if (lti_extend_lti_services($data)) {
             break;
         }
-        
+
         //If an event handler handles the web service, it should set this global to true
         //So this code knows whether to send an "operation not supported" or not.
         global $lti_web_service_handled;

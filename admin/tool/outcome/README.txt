@@ -1,0 +1,2 @@
+This is a temporary plugin that is being used to install the outcome tables, capabilities, etc (basically anything under db/).
+This plugin will be removed and it's db directory will be merged with the lib/db directory.

@@ -78,6 +78,7 @@ function make_log_url($module, $url) {
             break;
         case 'user':
         case 'blog':
+        case 'outcome':
             $url = "/$module/$url";
             break;
         case 'upload':
@@ -2929,6 +2930,7 @@ function delete_course_module($id) {
     global $CFG, $DB;
     require_once($CFG->libdir.'/gradelib.php');
     require_once($CFG->dirroot.'/blog/lib.php');
+    require_once($CFG->dirroot.'/outcome/lib.php');
 
     if (!$cm = $DB->get_record('course_modules', array('id'=>$id))) {
         return true;
@@ -2955,6 +2957,8 @@ function delete_course_module($id) {
     $DB->delete_records('course_modules_avail_fields', array('coursemoduleid' => $cm->id));
     $DB->delete_records('course_completion_criteria', array('moduleinstance' => $cm->id,
                                                             'criteriatype' => COMPLETION_CRITERIA_TYPE_ACTIVITY));
+
+    outcome_area()->delete_area('mod_'.$modulename, 'mod', $cm->id);
 
     delete_context(CONTEXT_MODULE, $cm->id);
     $DB->delete_records('course_modules', array('id'=>$cm->id));
@@ -3886,6 +3890,12 @@ function create_course($data, $editoroptions = NULL) {
     // set up enrolments
     enrol_course_updated(true, $course, $data);
 
+    // todo: Probably have to wrap in a CFG setting to hide
+    if (property_exists($data, 'outcomesets') and is_array($data->outcomesets)) {
+        require_once($CFG->dirroot.'/outcome/lib.php');
+        outcome_mapper()->save_outcome_set_mappings($course->id, $data->outcomesets);
+    }
+
     add_to_log(SITEID, 'course', 'new', 'view.php?id='.$course->id, $data->fullname.' (ID '.$course->id.')');
 
     // Trigger events
@@ -3991,6 +4001,12 @@ function update_course($data, $editoroptions = NULL) {
 
     // update enrol settings
     enrol_course_updated(false, $course, $data);
+
+    // todo: Probably have to wrap in a CFG setting to hide
+    if (property_exists($data, 'outcomesets') and is_array($data->outcomesets)) {
+        require_once($CFG->dirroot.'/outcome/lib.php');
+        outcome_mapper()->save_outcome_set_mappings($course->id, $data->outcomesets);
+    }
 
     add_to_log($course->id, "course", "update", "edit.php?id=$course->id", $course->id);
 

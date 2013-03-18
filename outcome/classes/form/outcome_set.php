@@ -1,0 +1,166 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Outcome Set Form
+ *
+ * @package   core_outcome
+ * @category  outcome
+ * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @author    Mark Nielsen
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+
+require_once($CFG->libdir.'/formslib.php');
+
+class outcome_form_outcome_set extends moodleform {
+    protected function definition() {
+        global $PAGE;
+
+        $PAGE->requires->yui_module(
+            'moodle-core_outcome-editoutcome',
+            'M.core_outcome.init_editoutcome',
+            array(array(
+                'srcNode' => '#outcomeset_outcomes',
+                'dataNode' => 'input[name=outcomedata]',
+                'saveNode' => 'input[name=modifiedoutcomedata]'
+            ))
+        );
+        $PAGE->requires->strings_for_js(array('addoutcome', 'add', 'edit', 'move', 'delete',
+            'editx', 'movex', 'deletex', 'addchildoutcome', 'ok', 'moveoutcome', 'outcomemodified'), 'outcome');
+        $PAGE->requires->strings_for_js(array('cancel'), 'moodle');
+
+        $mform = $this->_form;
+
+        $mform->addElement('header', 'general', get_string('general', 'outcome'));
+
+        $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
+
+        $mform->addElement('text', 'name', get_string('name', 'outcome'), array('size'=>'40'));
+        $mform->setType('name', PARAM_TEXT);
+        $mform->addRule('name', null, 'required', null, 'client');
+
+        $mform->addElement('text', 'idnumber', get_string('idnumber', 'outcome'), array('size'=>'40'));
+        $mform->setType('idnumber', PARAM_TEXT);
+        $mform->addRule('idnumber', null, 'required', null, 'client');
+        $mform->addHelpButton('idnumber', 'idnumber', 'outcome');
+
+        $mform->addElement('textarea', 'description', get_string('description', 'outcome'), array('rows'=>'5', 'cols'=>'40'));
+        $mform->setType('description', PARAM_TEXT);
+        $mform->setAdvanced('description');
+
+        $mform->addElement('text', 'provider', get_string('provider', 'outcome'), array('size'=>'5'));
+        $mform->setType('provider', PARAM_TEXT);
+        $mform->setAdvanced('provider');
+        $mform->addHelpButton('provider', 'provider', 'outcome');
+
+        $mform->addElement('text', 'region', get_string('region', 'outcome'), array('size'=>'5'));
+        $mform->setType('region', PARAM_TEXT);
+        $mform->setAdvanced('region');
+        $mform->addHelpButton('region', 'region', 'outcome');
+
+        $mform->addElement('header', 'outcomes', get_string('outcomes', 'outcome'));
+
+        $html = html_writer::tag('p', get_string('outcomes_help', 'outcome'), array('class' => 'outcomes_help')).
+            html_writer::tag('div', '', array('id' => 'outcomeset_outcomes'));
+
+        $mform->addElement('html', $html);
+
+        $mform->addElement('hidden', 'outcomedata');
+        $mform->setType('outcomedata', PARAM_RAW_TRIMMED);
+
+        $mform->addElement('hidden', 'modifiedoutcomedata');
+        $mform->setType('outcomedata', PARAM_RAW_TRIMMED);
+
+        $mform->addElement('html', html_writer::start_tag('div', array('id' => 'outcome_edit_panel')));
+
+        $mform->addElement('hidden', 'outcome_id', 0, array('id' => 'outcome_id'));
+        $mform->setType('outcome_id', PARAM_INT);
+
+        $mform->addElement('hidden', 'outcome_parentid', 0, array('id' => 'outcome_parentid'));
+        $mform->setType('outcome_parentid', PARAM_INT);
+
+        $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
+            array('class' => 'error', 'data-errorcode' => 'nameRequired')));
+        $mform->addElement('text', 'outcome_name', get_string('name', 'outcome'), array('size'=>'40'));
+        $mform->setType('outcome_name', PARAM_TEXT);
+
+        $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
+            array('class' => 'error', 'data-errorcode' => 'idnumberRequired')));
+        $mform->addElement('html', html_writer::tag('div', get_string('idnumbernotunique', 'outcome'),
+            array('class' => 'error', 'data-errorcode' => 'idnumberNotUnique')));
+        $mform->addElement('html', html_writer::tag('div', get_string('idnumbervalidationfailed', 'outcome'),
+            array('class' => 'error', 'data-errorcode' => 'idnumberFailedToValidate')));
+        $mform->addElement('text', 'outcome_idnumber', get_string('idnumber', 'outcome'), array('size' => '40'));
+        $mform->setType('outcome_idnumber', PARAM_TEXT);
+        $mform->addHelpButton('outcome_idnumber', 'idnumber', 'outcome');
+
+        $mform->addElement('text', 'outcome_docnum', get_string('docnum', 'outcome'), array('size'=>'40'));
+        $mform->setType('outcome_docnum', PARAM_TEXT);
+        $mform->addHelpButton('outcome_docnum', 'docnum', 'outcome');
+
+        $mform->addElement('text', 'outcome_subjects', get_string('subjects', 'outcome'), array('size' => '40'));
+        $mform->setType('outcome_subjects', PARAM_TEXT);
+        $mform->addHelpButton('outcome_subjects', 'subjects', 'outcome');
+
+        $mform->addElement('text', 'outcome_edulevels', get_string('educationlevels', 'outcome'), array('size' => '40'));
+        $mform->setType('outcome_edulevels', PARAM_TEXT);
+        $mform->addHelpButton('outcome_edulevels', 'educationlevels', 'outcome');
+
+        $mform->addElement('checkbox', 'outcome_assessable', '', '&nbsp;'.get_string('assessable', 'outcome'));
+        $mform->addHelpButton('outcome_assessable', 'assessable', 'outcome');
+
+        $mform->addElement('textarea', 'outcome_description',
+            get_string('description', 'outcome'), array('rows' => '5', 'cols' => '40'));
+        $mform->setType('outcome_description', PARAM_TEXT);
+
+        $mform->addElement('html', html_writer::end_tag('div'));
+
+        $mform->addElement('html', html_writer::start_tag('div', array('id' => 'outcome_move_panel')));
+
+        $options = array(
+            'child' => get_string('asfirstchild', 'outcome'),
+            'before' => get_string('before', 'outcome'),
+            'after' => get_string('after', 'outcome'),
+        );
+
+        $elements   = array();
+        $elements[] =& $mform->createElement('select', 'outcome_placement', get_string('outcome_placement', 'outcome'), $options);
+        $elements[] =& $mform->createElement('select', 'outcome_reference', get_string('outcome_reference', 'outcome'), array());
+        $mform->addElement('group', 'outcome_move_grp', 'placeholder', $elements, ' ', false);
+
+        $mform->addElement('html', html_writer::end_tag('div'));
+
+        $this->add_action_buttons();
+    }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
+
+        $repo = new outcome_model_outcome_set_repository();
+        if (!$repo->is_idnumber_unique($data['idnumber'], $data['id'])) {
+            $errors['idnumber'] = get_string('idnumbernotunique', 'outcome');
+        }
+        return $errors;
+    }
+}

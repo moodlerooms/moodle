@@ -4553,7 +4553,9 @@ function set_login_session_preferences() {
  *             failed, but you have no way of knowing which.
  */
 function delete_course($courseorid, $showfeedback = true) {
-    global $DB;
+    global $CFG, $DB;
+
+    require_once($CFG->dirroot.'/outcome/lib.php');
 
     if (is_object($courseorid)) {
         $courseid = $courseorid->id;
@@ -4583,6 +4585,9 @@ function delete_course($courseorid, $showfeedback = true) {
 
     $DB->delete_records("course", array("id" => $courseid));
     $DB->delete_records("course_format_options", array("courseid" => $courseid));
+
+    // Cleanup outcomes.
+    outcome_mapper()->remove_used_outcome_sets($courseid);
 
     //trigger events
     $course->context = $context; // you can not fetch context in the event because it was already deleted
@@ -7981,6 +7986,7 @@ function get_core_subsystems() {
             'moodle.org'  => NULL, // the dot is nasty, watch out! should be renamed to moodleorg
             'my'          => 'my',
             'notes'       => 'notes',
+            'outcome'     => 'outcome',
             'pagetype'    => NULL,
             'pix'         => NULL,
             'plagiarism'  => 'plagiarism',

@@ -302,7 +302,9 @@ function question_category_in_use($categoryid, $recursive = false) {
  * @param object $question  The question being deleted
  */
 function question_delete_question($questionid) {
-    global $DB;
+    global $CFG, $DB;
+
+    require_once($CFG->dirroot.'/outcome/lib.php');
 
     $question = $DB->get_record_sql('
             SELECT q.*, qc.contextid
@@ -340,6 +342,9 @@ function question_delete_question($questionid) {
             }
         }
     }
+
+    // Cleanup outcomes.
+    outcome_area()->delete_area('qtype_'.$question->qtype, 'qtype', $question->id);
 
     // Finally delete the question record itself
     $DB->delete_records('question', array('id' => $questionid));

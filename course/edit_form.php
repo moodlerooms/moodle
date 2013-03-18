@@ -190,6 +190,15 @@ class course_edit_form extends moodleform {
         }
 
 //--------------------------------------------------------------------------------
+        // todo: Probably have to wrap in a CFG setting to hide
+        $mform->addElement('header', 'outcomes', get_string('outcomes', 'outcome'));
+        $mform->addElement('mapoutcomeset', 'outcomesets');
+        $mform->addHelpButton('outcomesets', 'selectoutcomesets', 'outcome');
+        if (!has_capability('moodle/outcome:mapoutcomesets', $context)) {
+            $mform->hardFreeze('outcomesets');
+        }
+
+//--------------------------------------------------------------------------------
         $mform->addElement('hidden', 'addcourseformatoptionshere');
 
 //--------------------------------------------------------------------------------

@@ -229,6 +229,10 @@ if (!empty($add)) {
         $pageheading = get_string('updatinga', 'moodle', $fullmodulename);
     }
 
+    // todo: Probably have to wrap in a CFG setting to hide
+    require_once($CFG->dirroot.'/outcome/lib.php');
+    $data->outcomes = outcome_mapper()->get_outcome_mappings_for_form('mod_'.$module->name, 'mod', $cm->id);
+
 } else {
     require_login();
     print_error('invalidaction');
@@ -619,6 +623,13 @@ if ($mform->is_cancelled()) {
                 $showgradingmanagement = $showgradingmanagement || $methodchanged;
             }
         }
+    }
+
+    // todo: Probably have to wrap in a CFG setting to hide
+    require_once($CFG->dirroot.'/outcome/lib.php');
+    $outcomearea = outcome_mapper()->save_outcome_mappings('mod_'.$fromform->modulename, 'mod', $fromform->coursemodule, $fromform->outcomes);
+    if ($outcomearea) {
+        outcome_area()->set_area_used($outcomearea, $fromform->coursemodule);
     }
 
     rebuild_course_cache($course->id);

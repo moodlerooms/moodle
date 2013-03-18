@@ -1661,6 +1661,37 @@ function quiz_groups_members_removed_handler($event) {
 }
 
 /**
+ * Handle question_edited event
+ *
+ * @param object $event
+ */
+function quiz_question_edited_handler($event) {
+    global $CFG, $DB;
+
+    require_once($CFG->dirroot.'/outcome/lib.php');
+
+    if (!$outcomearea = outcome_area()->get_area('qtype_'.$event->qtype, 'qtype', $event->id)) {
+        return;
+    }
+    $cmids = $DB->get_records_sql('
+    (SELECT DISTINCT cm.id
+       FROM {quiz_attempts} quiza
+ INNER JOIN {question_attempts} qa ON qa.questionusageid = quiza.uniqueid
+ INNER JOIN {course_modules} cm ON quiza.quiz = cm.instance
+ INNER JOIN {modules} m ON cm.module = m.id AND m.name = ?
+      WHERE qa.questionid = ?)
+      UNION
+    (SELECT DISTINCT cm.id
+       FROM {quiz_question_instances} qi
+ INNER JOIN {course_modules} cm ON qi.quiz = cm.instance
+ INNER JOIN {modules} m ON cm.module = m.id AND m.name = ?
+      WHERE qi.question = ?)
+    ', array('quiz', $event->id, 'quiz', $event->id));
+
+    outcome_area()->set_area_used_by_many($outcomearea, array_keys($cmids));
+}
+
+/**
  * Get the information about the standard quiz JavaScript module.
  * @return array a standard jsmodule structure.
  */

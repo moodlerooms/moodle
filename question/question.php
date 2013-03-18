@@ -218,6 +218,12 @@ if ($cm !== null){
 
 $toform->inpopup = $inpopup;
 
+// todo: Probably have to wrap in a CFG setting to hide
+require_once($CFG->dirroot.'/outcome/lib.php');
+if (!empty($question->id)) {
+    $toform->outcomes = outcome_mapper()->get_outcome_mappings_for_form('qtype_'.$question->qtype, 'qtype', $question->id);
+}
+
 $mform->set_data($toform);
 
 if ($mform->is_cancelled()) {
@@ -279,6 +285,18 @@ if ($mform->is_cancelled()) {
             require_once($CFG->dirroot.'/tag/lib.php');
             tag_set('question', $question->id, $fromform->tags);
         }
+        // todo: Probably have to wrap in a CFG setting to hide
+        if (isset($fromform->outcomes)) {
+            require_once($CFG->dirroot.'/outcome/lib.php');
+            outcome_mapper()->save_outcome_mappings('qtype_'.$question->qtype, 'qtype', $question->id, $fromform->outcomes);
+        }
+        events_trigger('question_edited', (object) array(
+            'id' => $question->id,
+            'qtype' => $question->qtype,
+            'userid' => $USER->id,
+            'contextid' => $thiscontext->id,
+            'timemodified' => time(),
+        ));
     }
 
     // Purge this question from the cache.

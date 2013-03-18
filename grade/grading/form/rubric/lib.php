@@ -117,7 +117,9 @@ class gradingform_rubric_controller extends gradingform_controller {
      *
      */
     public function update_or_check_rubric(stdClass $newdefinition, $usermodified = null, $doupdate = false) {
-        global $DB;
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot.'/outcome/lib.php');
 
         // firstly update the common definition data in the {grading_definition} table
         if ($this->definition === false) {
@@ -199,6 +201,20 @@ class gradingform_rubric_controller extends gradingform_controller {
                     }
                 }
             }
+            // todo: Probably have to wrap in a CFG setting to hide
+            // Save criterion outcome.
+            if ($doupdate) {
+                $outcome = null;
+                if (!empty($criterion['outcomeid'])) {
+                    $outcome = $criterion['outcomeid'];
+                }
+                $outcomearea = outcome_mapper()->save_outcome_mapping('gradingform_rubric', 'criterion', $id, $outcome);
+
+                // If we are within an activity, ensure that the area is flagged as being used.
+                if ($outcomearea and $this->get_context() instanceof context_module) {
+                    outcome_area()->set_area_used($outcomearea, $this->get_context()->instanceid);
+                }
+            }
             foreach ($levelsdata as $levelid => $level) {
                 if (isset($level['score'])) {
                     $level['score'] = (float)$level['score'];
@@ -252,6 +268,9 @@ class gradingform_rubric_controller extends gradingform_controller {
                 if ($doupdate) {
                     $DB->delete_records('gradingform_rubric_criteria', array('id' => $id));
                     $DB->delete_records('gradingform_rubric_levels', array('criterionid' => $id));
+
+                    // Remove criterion outcome area.
+                    outcome_area()->delete_area('gradingform_rubric', 'criterion', $id);
                 }
                 $haschanges[3] = true;
             }
@@ -295,7 +314,7 @@ class gradingform_rubric_controller extends gradingform_controller {
      * There is a new array called 'rubric_criteria' appended to the list of parent's definition properties.
      */
     protected function load_definition() {
-        global $DB;
+        global $CFG, $DB;
         $sql = "SELECT gd.*,
                        rc.id AS rcid, rc.sortorder AS rcsortorder, rc.description AS rcdescription, rc.descriptionformat AS rcdescriptionformat,
                        rl.id AS rlid, rl.score AS rlscore, rl.definition AS rldefinition, rl.definitionformat AS rldefinitionformat
@@ -341,6 +360,23 @@ class gradingform_rubric_controller extends gradingform_controller {
         if (!$options['sortlevelsasc']) {
             foreach (array_keys($this->definition->rubric_criteria) as $rcid) {
                 $this->definition->rubric_criteria[$rcid]['levels'] = array_reverse($this->definition->rubric_criteria[$rcid]['levels'], true);
+            }
+        }
+        // todo: Probably have to wrap in a CFG setting to hide
+        if (!empty($this->definition->rubric_criteria)) {
+            require_once($CFG->dirroot.'/outcome/lib.php');
+
+            $mappings = outcome_mapper()->get_many_outcome_mappings(
+                'gradingform_rubric',
+                'criterion',
+                array_keys($this->definition->rubric_criteria)
+            );
+            foreach ($mappings as $criteriaid => $outcomes) {
+                /** @var $outcome outcome_model_outcome */
+                $outcome = current($outcomes);
+                $this->definition->rubric_criteria[$criteriaid]['outcomeid']         = $outcome->id;
+                $this->definition->rubric_criteria[$criteriaid]['description']       = $outcome->name;
+                $this->definition->rubric_criteria[$criteriaid]['descriptionformat'] = FORMAT_MOODLE;
             }
         }
     }
@@ -530,7 +566,9 @@ class gradingform_rubric_controller extends gradingform_controller {
      * Deletes the rubric definition and all the associated information
      */
     protected function delete_plugin_definition() {
-        global $DB;
+        global $CFG, $DB;
+
+        require_once($CFG->dirroot.'/outcome/lib.php');
 
         // get the list of instances
         $instances = array_keys($DB->get_records('grading_instances', array('definitionid' => $this->definition->id), '', 'id'));
@@ -544,6 +582,10 @@ class gradingform_rubric_controller extends gradingform_controller {
         $DB->delete_records_list('gradingform_rubric_levels', 'criterionid', $criteria);
         // delete critera
         $DB->delete_records_list('gradingform_rubric_criteria', 'id', $criteria);
+
+        foreach ($criteria as $criteriaid) {
+            outcome_area()->delete_area('gradingform_rubric', 'criterion', $criteriaid);
+        }
     }
 
     /**

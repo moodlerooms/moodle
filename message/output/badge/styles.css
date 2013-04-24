@@ -1,0 +1,110 @@
+.message_badge {
+    height: 36px;
+    width: 38px;
+    background: url([[pix:message_badge|badge]]) no-repeat top left;
+    clear: both;
+    cursor: pointer;
+}
+
+.message_badge_count {
+    background: url([[pix:message_badge|counter]]) no-repeat;
+    color: white;
+    height: 18px;
+    width: 18px;
+    position: relative;
+    top: 18px;
+    left: 20px;
+    text-align: center;
+    font-size: 10px;
+    padding-top: 4px;
+    cursor: pointer;
+}
+
+.ie7 .message_badge_count {
+    left: 0;
+}
+
+.message_badge_mobile_messages .message_badge_message_text {
+    overflow: hidden;
+    white-space: normal;
+}
+
+.message_badge_overlay {
+    max-height: 35em;
+    overflow: auto;
+    width: 30em;
+}
+
+.message_badge_overlay,
+.message_badge_message_overlay {
+    background-color: #ffffff;
+    border: 1px solid #999999;
+    padding: 5px;
+}
+
+.message_badge_message_overlay .yui3-widget-hd,
+.message_badge_overlay .yui3-widget-hd {
+    font-weight: bold;
+    font-size: 1.2em;
+    padding-bottom: 5px;
+}
+
+.message_badge_message_overlay {
+    width: 30em;
+    overflow: auto;
+    max-height: 35em;
+}
+
+.message_badge_message_overlay .yui3-widget-hd {
+    font-size: 1em;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #DDD;
+}
+
+.message_badge_message,
+.message_badge_empty {
+    border-top: 1px solid #DDD;
+    padding-top: 5px;
+    clear: both;
+}
+
+.message_badge_user_picture {
+    float: left;
+    margin-right: 5px;
+}
+
+.message_badge_message_content {
+    padding-left: 5px;
+}
+
+.message_badge_hidden {
+    display: none;
+}
+
+.jsenabled .message_badge.message_badge_hidden {
+    display: block;
+}
+
+.message_badge_message_subject {
+    padding-right: 50px;
+}
+
+.message_badge_message_close {
+    float: right;
+    font-weight: normal;
+}
+
+.message_badge_title_help {
+    float: right;
+}
+
+.message_badge_urls a {
+    text-decoration: underline;
+}
+
+/* This one is weird, use 0em so the icon moves up a little */
+.message_badge_title_help,
+.message_badge_title_help a,
+.message_badge_title_help span {
+    font-size: 0em;
+}

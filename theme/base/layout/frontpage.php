@@ -47,6 +47,11 @@ echo $OUTPUT->doctype() ?>
             echo $OUTPUT->login_info();
             echo $OUTPUT->lang_menu();
             echo $PAGE->headingmenu;
+            try {
+                echo $PAGE->get_renderer('message_badge')->badge();
+            } catch (Exception $e) {
+                // Nothing...
+            }
         ?></div>
         <?php if ($hascustommenu) { ?>
         <div id="custommenu"><?php echo $custommenu; ?></div>

@@ -1173,6 +1173,13 @@ function get_module_metadata($course, $modnames, $sectionreturn = null) {
 
                     if (get_string_manager()->string_exists('help' . $subtype->name, $modname)) {
                         $subtype->help = get_string('help' . $subtype->name, $modname);
+                    } else if ($sm->string_exists('modulename_help', $modname)) {
+                        $subtype->help = get_string('modulename_help', $modname);
+                        if ($sm->string_exists('modulename_link', $modname)) {  // Link to further info in Moodle docs
+                            $link = get_string('modulename_link', $modname);
+                            $linktext = get_string('morehelp');
+                            $subtype->help .= html_writer::tag('div', $OUTPUT->doc_link($link, $linktext, true), array('class' => 'helpdoclink'));
+                        }
                     }
                     $subtype->link = new moodle_url($urlbase, array('add' => $modname, 'type' => $subtype->name));
                     $group->types[] = $subtype;

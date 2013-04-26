@@ -164,18 +164,32 @@ function lti_delete_instance($id) {
 }
 
 function lti_get_types() {
+    $types = array();
+
+    $type = new stdClass();
+    $type->modclass = MOD_CLASS_ACTIVITY;
+    $type->type = 'lti_group_start';
+    $type->typestr = '--'.get_string('modulenameplural', 'mod_lti');
+    $types[] = $type;
+
     $type = new stdClass();
     $type->modclass = MOD_CLASS_ACTIVITY;
     $type->type = 'lti';
-    $type->typestr = get_string('modulename', 'mod_lti');
-
-    $types = array($type);
+    $type->typestr = get_string('generaltool', 'mod_lti');
+    $types[] = $type;
 
     foreach (get_plugin_list('ltisource') as $name => $dir) {
         if ($moretypes = component_callback("ltisource_$name", 'get_types')) {
             $types = array_merge($types, $moretypes);
         }
     }
+
+    $type = new stdClass();
+    $type->modclass = MOD_CLASS_ACTIVITY;
+    $type->type = 'lti_group_end';
+    $type->typestr = '--';
+    $types[] = $type;
+
     return $types;
 }
 

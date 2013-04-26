@@ -1668,6 +1668,9 @@ function quiz_groups_members_removed_handler($event) {
 function quiz_question_edited_handler($event) {
     global $CFG, $DB;
 
+    if (empty($CFG->enableoutcomes)) {
+        return;
+    }
     require_once($CFG->dirroot.'/outcome/lib.php');
 
     if (!$outcomearea = outcome_area()->get_area('qtype_'.$event->qtype, 'qtype', $event->id)) {

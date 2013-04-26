@@ -76,10 +76,10 @@ if (!empty($course)) {
     foreach($aliases as $alias) {
         $course->{'role_'.$alias->roleid} = $alias->name;
     }
-
-    // todo: Probably have to wrap in a CFG setting to hide
-    require_once($CFG->dirroot.'/outcome/lib.php');
-    $course->outcomesets = outcome_mapper()->get_outcome_set_mappings($course->id);
+    if (!empty($CFG->enableoutcomes)) {
+        require_once($CFG->dirroot.'/outcome/lib.php');
+        $course->outcomesets = outcome_mapper()->get_outcome_set_mappings($course->id);
+    }
 
 } else {
     //editor should respect category context if course context is not set.

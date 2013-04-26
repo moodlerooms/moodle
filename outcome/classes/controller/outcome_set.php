@@ -37,6 +37,26 @@ require_once(__DIR__.'/abstract.php');
  */
 class outcome_controller_outcome_set extends outcome_controller_abstract {
     /**
+     * @var outcome_model_outcome_repository
+     */
+    public $outcomes;
+
+    /**
+     * @var outcome_model_outcome_set_repository
+     */
+    public $outcomesets;
+
+    /**
+     * @var outcome_service_outcome_helper
+     */
+    public $outcomehelper;
+
+    /**
+     * @var outcome_service_outcome_set_helper
+     */
+    public $outcomesethelper;
+
+    /**
      * Do any security checks needed for the passed action
      *
      * @abstract
@@ -46,6 +66,20 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
         global $PAGE;
 
         require_capability('moodle/outcome:edit', $PAGE->context);
+    }
+
+    public function init($action) {
+        parent::init($action);
+
+        require_once(dirname(__DIR__).'/model/outcome_repository.php');
+        require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
+        require_once(dirname(__DIR__).'/service/outcome_helper.php');
+        require_once(dirname(__DIR__).'/service/outcome_set_helper.php');
+
+        $this->outcomes         = new outcome_model_outcome_repository();
+        $this->outcomesets      = new outcome_model_outcome_set_repository();
+        $this->outcomehelper    = new outcome_service_outcome_helper($this->outcomes);
+        $this->outcomesethelper = new outcome_service_outcome_set_helper($this->outcomesets);
     }
 
     /**
@@ -71,8 +105,6 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
         global $COURSE;
 
         require_once(dirname(__DIR__).'/form/outcome_set.php');
-        require_once(dirname(__DIR__).'/model/outcome_repository.php');
-        require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
 
         $outcomesetid = optional_param('outcomesetid', 0, PARAM_INT);
 
@@ -80,73 +112,24 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
         $formurl   = $this->new_url(array('action' => 'outcomeset_edit', 'outcomesetid' => $outcomesetid));
         $mform     = new outcome_form_outcome_set($formurl);
 
-        $outcomesetrepo = new outcome_model_outcome_set_repository();
-        $outcomerepo    = new outcome_model_outcome_repository();
-
         if (!empty($outcomesetid)) {
-            $outcomeset = $outcomesetrepo->find($outcomesetid, MUST_EXIST);
+            $outcomeset = $this->outcomesets->find($outcomesetid, MUST_EXIST);
         } else {
             $outcomeset = new outcome_model_outcome_set();
         }
-        $outcomes = $outcomerepo->find_by_outcome_set($outcomeset);
+        $outcomes = $this->outcomes->find_by_outcome_set($outcomeset, true);
 
         if ($mform->is_cancelled()) {
             redirect($returnurl);
         } else if ($data = $mform->get_data()) {
-            $outcomeset->name = $data->name;
-            $outcomeset->idnumber = $data->idnumber;
-            $outcomeset->description = $data->description;
-            $outcomeset->provider = $data->provider;
-            $outcomeset->region = $data->region;
+            // Save the outcome set and outcomes.
+            $this->outcomesethelper->save_outcome_set_form_data($outcomeset, $data);
+            $this->outcomehelper->save_outcome_form_data($outcomeset, $outcomes, $data);
+            $this->outcomehelper->fix_sort_order($outcomeset);
 
-            $outcomesetrepo->save($outcomeset);
-
-            if (!empty($data->modifiedoutcomedata)) {
-                $rawoutcomes = json_decode($data->modifiedoutcomedata);
-                $newidmap = array();
-
-                foreach ($rawoutcomes as $rawoutcome) {
-
-                    $id = clean_param($rawoutcome->id, PARAM_INT);
-                    if ($id > 0) {
-                        $outcome = $outcomes[$id];
-                    } else {
-                        $outcome = new outcome_model_outcome();
-                    }
-                    $outcome->outcomesetid = $outcomeset->id;
-                    $outcome->parentid = clean_param($rawoutcome->parentid, PARAM_INT);
-                    $outcome->idnumber = clean_param($rawoutcome->idnumber, PARAM_TEXT);
-                    $outcome->name = clean_param($rawoutcome->name, PARAM_TEXT);
-                    $outcome->docnum = clean_param($rawoutcome->docnum, PARAM_TEXT);
-                    $outcome->assessable = clean_param($rawoutcome->assessable, PARAM_BOOL);
-                    $outcome->deleted = clean_param($rawoutcome->deleted, PARAM_BOOL);
-                    $outcome->description = clean_param($rawoutcome->description, PARAM_TEXT);
-                    $outcome->subjects = clean_param_array($rawoutcome->subjects, PARAM_TEXT);
-                    $outcome->edulevels = clean_param_array($rawoutcome->edulevels, PARAM_TEXT);
-                    $outcome->sortorder = clean_param($rawoutcome->sortorder, PARAM_INT);
-
-                    if ($outcome->parentid < 0) {
-                        if (array_key_exists($outcome->parentid, $newidmap)) {
-                            $outcome->parentid = $newidmap[$outcome->parentid];
-                        } else {
-                            $this->flashmessages->bad('failedtosavereasonparent', format_string($outcome->name));
-                        }
-                    } else if ($outcome->parentid == 0) {
-                        $outcome->parentid = null;
-                    }
-                    $outcomerepo->save($outcome);
-
-                    if ($id < 0) {
-                        $newidmap[$id] = $outcome->id;
-                    }
-                }
-                // TODO Post process to validate sortorder?
-            }
-            if (!$this->flashmessages->has_messages(outcome_output_flash_messages::BAD)) {
-                $this->flashmessages->good('changessavedtox', format_string($outcomeset->name));
-            }
+            // Report success to user, log and redirect.
+            $this->flashmessages->good('changessavedtox', format_string($outcomeset->name));
             add_to_log($COURSE->id, 'outcome', 'edit outcome set', 'admin.php?action=outcomeset', $outcomeset->id);
-
             redirect($returnurl);
         }
         if (!empty($outcomesetid)) {
@@ -164,13 +147,10 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
 
         require_sesskey();
 
-        require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
-
         $outcomesetid = required_param('outcomesetid', PARAM_INT);
 
-        $repo = new outcome_model_outcome_set_repository();
-        $outcomeset = $repo->find($outcomesetid, MUST_EXIST);
-        $repo->remove($outcomeset);
+        $outcomeset = $this->outcomesets->find($outcomesetid, MUST_EXIST);
+        $this->outcomesets->remove($outcomeset);
 
         $restoreurl = $this->new_url(array(
             'action'       => 'outcomeset_restore',
@@ -195,13 +175,10 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
 
         require_sesskey();
 
-        require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
-
         $outcomesetid = required_param('outcomesetid', PARAM_INT);
 
-        $repo = new outcome_model_outcome_set_repository();
-        $outcomeset = $repo->find($outcomesetid, MUST_EXIST);
-        $repo->restore($outcomeset);
+        $outcomeset = $this->outcomesets->find($outcomesetid, MUST_EXIST);
+        $this->outcomesets->restore($outcomeset);
 
         $this->flashmessages->good('outcomesetrestored', format_string($outcomeset->name));
 

@@ -153,14 +153,17 @@ class outcome_model_area_repository extends outcome_model_abstract_repository {
      *
      * @param outcome_model_area $model
      * @param int $cmid
-     * @return $this
+     * @param bool $created A flag to determine if the record was created or not
+     * @return int
      */
-    public function set_area_used(outcome_model_area $model, $cmid) {
+    public function set_area_used(outcome_model_area $model, $cmid, &$created = false) {
         $conditions = array('cmid' => $cmid, 'outcomeareaid' => $model->id);
-        if (!$this->db->record_exists('outcome_used_areas', $conditions)) {
-            $this->db->insert_record('outcome_used_areas', (object) $conditions);
+        if ($id = $this->db->get_field('outcome_used_areas', 'id', $conditions)) {
+            $created = false;
+            return $id;
         }
-        return $this;
+        $created = true;
+        return $this->db->insert_record('outcome_used_areas', (object) $conditions);
     }
 
     /**
@@ -205,11 +208,48 @@ class outcome_model_area_repository extends outcome_model_abstract_repository {
      *
      * @param outcome_model_area $model
      * @param int $cmid
-     * @return $this
+     * @return int The ID of the outcome_used_areas record
      */
     public function unset_area_used(outcome_model_area $model, $cmid) {
         $this->db->delete_records('outcome_used_areas', array('cmid' => $cmid, 'outcomeareaid' => $model->id));
         return $this;
+    }
+
+    /**
+     * Fetch an outcome_used_areas.id based on area and course module.
+     *
+     * The area model does not have to have its ID set.  If the model
+     * does not have an ID and one is found, it will be set to the model.
+     *
+     * @param outcome_model_area $model
+     * @param int $cmid
+     * @return int|boolean
+     */
+    public function fetch_area_used_id(outcome_model_area $model, $cmid) {
+        if (empty($model->id)) {
+            $where = 'a.component = ? AND a.area = ? AND a.itemid = ?';
+            $params = array($model->component, $model->area, $model->itemid);
+        } else {
+            $where = 'a.id = ?';
+            $params = array($model->id);
+        }
+        $result = $this->db->get_record_sql("
+            SELECT a.id areaid, used.id usedareaid
+              FROM {outcome_areas} a
+   LEFT OUTER JOIN {outcome_used_areas} used ON a.id = used.outcomeareaid AND used.cmid = ?
+             WHERE $where
+        ", array_merge(array($cmid), $params));
+
+        if ($result === false) {
+            return false; // Area doesn't even exist.
+        }
+        if (empty($model->id)) {
+            $model->id = $result->areaid;
+        }
+        if (empty($result->usedareaid)) {
+            return false;
+        }
+        return $result->usedareaid;
     }
 
     /**

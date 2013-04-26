@@ -29,11 +29,11 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
             '<span class="actions">' +
             '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1">' +
             '<img src="{{../../../../urlImgDelete}}" />' +
-            '<span class="accesshide">{{getString "deletex" name}}</span>' +
+            '<span class="accesshide">{{getString "deletex" description}}</span>' +
             '</a>' +
             '</span>&nbsp;' +
             '{{/unless}}' +
-            '{{name}}</li>' +
+            '{{description}}</li>' +
             '{{/each}}' +
             '</ul></li>' +
             '{{/each}}' +
@@ -69,7 +69,7 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
 
                 // Create out outcome selection panel
                 OUTCOME_PANEL = M.core_outcome.init_outcomepanel({
-                    contextid: this.get('contextid')
+                    contextId: this.get('contextId')
                 });
             },
 
@@ -218,7 +218,7 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
                 /**
                  * Current context ID, used for AJAX requests
                  */
-                contextid: {},
+                contextId: {},
                 /**
                  * If the form is frozen or not
                  */

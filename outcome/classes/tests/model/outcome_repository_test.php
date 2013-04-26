@@ -42,11 +42,6 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
     protected $_outcome;
 
     /**
-     * @var outcome_model_outcome
-     */
-    protected $_outcomenometa;
-
-    /**
      * @var outcome_model_outcome[]
      */
     protected $_mappable_outcomes;
@@ -65,15 +60,15 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
         $outcome2 = $this->_expected_outcome($data['outcome'][1]);
         $outcome3 = $this->_expected_outcome($data['outcome'][2]);
 
-        $this->_outcomenometa = clone($outcome1);
+        $this->_outcome = clone($outcome1);
+        $this->_mappable_outcomes = array('1' => clone($outcome1), '3' => clone($outcome3));
 
+        // Expect metadata from outcome set query.
         $outcome1->edulevels = array('9', '10');
-        $outcome1->subjects = array('Math');
+        $outcome1->subjects  = array('Math');
         $outcome3->edulevels = array('10');
-        $outcome3->subjects = array('English');
+        $outcome3->subjects  = array('English');
 
-        $this->_outcome = $outcome1;
-        $this->_mappable_outcomes = array('1' => $outcome1, '3' => $outcome3);
         $this->_set_one_outcomes = array('1' => $outcome1, '2' => $outcome2, '3' => $outcome3);
     }
 
@@ -98,15 +93,11 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
         $filter->add_filter('10', 'Math');
         $filter->add_filter(null, null);
 
-        $method = new ReflectionMethod(
-            'outcome_model_outcome_repository',
-            'filter_to_sql'
-        );
+        $repo = new outcome_model_outcome_repository();
+        $result = $repo->filter_to_sql($filter);
 
-        $method->setAccessible(true);
-        $result = $method->invoke(new outcome_model_outcome_repository(), $filter);
-
-        $this->assertEquals(array($filter->outcomesetid), $result[1], 'Should just filter by outcome set ID');
+        $expected = array('filteroutcomesetid' => $filter->outcomesetid);
+        $this->assertEquals($expected, $result[1], 'Should just filter by outcome set ID');
     }
 
     public function test_find() {
@@ -136,7 +127,7 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
         $outcomeset = new outcome_model_outcome_set();
         $outcomeset->id = 1;
         $repo  = new outcome_model_outcome_repository();
-        $found = $repo->find_by_outcome_set($outcomeset);;
+        $found = $repo->find_by_outcome_set($outcomeset, true);
         $this->assertEquals($this->_set_one_outcomes, $found);
     }
 
@@ -177,10 +168,6 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
         $repo  = new outcome_model_outcome_repository();
         $found = $repo->find_by_area_and_filter($area, $filter);
 
-        // TODO: address metadata issue - clearing b/c this method doesn't return metadata
-        $this->_outcome->edulevels = array();
-        $this->_outcome->subjects = array();
-
         $this->assertEquals(array('1' => $this->_outcome), $found);
     }
 
@@ -188,7 +175,7 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
         $repo  = new outcome_model_outcome_repository();
         $found = $repo->find_by_area_itemids('mod_forum', 'mod', array('1'));
 
-        $this->assertEquals(array('1' => array('1' => $this->_outcomenometa)), $found);
+        $this->assertEquals(array('1' => array('1' => $this->_outcome)), $found);
     }
 
     public function test_is_idnumber_unique() {
@@ -205,8 +192,10 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
 
         $model               = new outcome_model_outcome();
         $model->outcomesetid = 1;
-        $model->name         = 'phpunit';
+        $model->description  = 'phpunit';
         $model->idnumber     = 'phpunit';
+        $model->subjects     = array('Math', 'English');
+        $model->edulevels    = array('9', '10');
 
         $now = time();
 
@@ -229,5 +218,16 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
 
         $this->assertEquals($this->_outcome->timecreated, $model->timecreated);
         $this->assertEquals($now, $model->timemodified, '', 2);
+    }
+
+    public function test_update_sort_order() {
+        global $DB;
+
+        $this->_outcome->sortorder = 200;
+
+        $repo = new outcome_model_outcome_repository();
+        $repo->save($this->_outcome);
+
+        $this->assertEquals($this->_outcome->sortorder, $DB->get_field('outcome', 'sortorder', array('id' => $this->_outcome->id)));
     }
 }

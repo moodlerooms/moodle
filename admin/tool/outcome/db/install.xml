@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/outcome/db" VERSION="20130403" COMMENT="XMLDB file for Moodle admin/tool/outcome"
+<XMLDB PATH="admin/tool/outcome/db" VERSION="20130507" COMMENT="XMLDB file for Moodle admin/tool/outcome"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -29,10 +29,9 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="outcomesetid"/>
         <FIELD NAME="outcomesetid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="parentid"/>
         <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Self referencing key. Identifies the parent outcome in the hierarchy." PREVIOUS="outcomesetid" NEXT="idnumber"/>
-        <FIELD NAME="idnumber" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="GUID that is auto-generated if missing." PREVIOUS="parentid" NEXT="name"/>
-        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="The name of the outcome." PREVIOUS="idnumber" NEXT="docnum"/>
-        <FIELD NAME="docnum" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Field for tracking additional information on the outcome. EG: 2.3.A" PREVIOUS="name" NEXT="description"/>
-        <FIELD NAME="description" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The description of the outcome." PREVIOUS="docnum" NEXT="assessable"/>
+        <FIELD NAME="idnumber" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="GUID that is auto-generated if missing." PREVIOUS="parentid" NEXT="docnum"/>
+        <FIELD NAME="docnum" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Field for tracking additional information on the outcome. EG: 2.3.A" PREVIOUS="idnumber" NEXT="description"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The description of the outcome." PREVIOUS="docnum" NEXT="assessable"/>
         <FIELD NAME="assessable" TYPE="int" LENGTH="1" NOTNULL="true" SEQUENCE="false" COMMENT="If set to 1, then the outcome is assessable and can be mapped to content. If set to 0, then the outcome is not assessable and cannot be mapped to content." PREVIOUS="description" NEXT="deleted"/>
         <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="If the outcome has been deleted." PREVIOUS="assessable" NEXT="sortorder"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The sort order. This is 0-X for all outcomes that belong to the same outcome set." PREVIOUS="deleted" NEXT="timemodified"/>
@@ -111,24 +110,29 @@
         <KEY NAME="outcomesetid" TYPE="foreign" FIELDS="outcomesetid" REFTABLE="outcome_sets" REFFIELDS="id" PREVIOUS="courseid"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="outcome_attempts" COMMENT="Track a user attempt against a content item within a particular activity." PREVIOUS="outcome_used_sets" NEXT="outome_marks">
+    <TABLE NAME="outcome_attempts" COMMENT="Track a user attempt against a content item within a particular activity." PREVIOUS="outcome_used_sets" NEXT="outcome_marks">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="outcomeusedareaid"/>
         <FIELD NAME="outcomeusedareaid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="outcomeusedareaid" NEXT="percentgrade"/>
-        <FIELD NAME="percentgrade" TYPE="number" LENGTH="10" NOTNULL="true" SEQUENCE="false" DECIMALS="5" COMMENT="Percent grade earned on this attempt." PREVIOUS="userid" NEXT="mingrade"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="outcomeusedareaid" NEXT="itemid"/>
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="A way to identify an individual attempt" PREVIOUS="userid" NEXT="percentgrade"/>
+        <FIELD NAME="percentgrade" TYPE="number" LENGTH="10" NOTNULL="true" SEQUENCE="false" DECIMALS="5" COMMENT="Percent grade earned on this attempt." PREVIOUS="itemid" NEXT="mingrade"/>
         <FIELD NAME="mingrade" TYPE="number" LENGTH="10" NOTNULL="true" SEQUENCE="false" DECIMALS="5" COMMENT="The minimum possible grade." PREVIOUS="percentgrade" NEXT="maxgrade"/>
         <FIELD NAME="maxgrade" TYPE="number" LENGTH="10" NOTNULL="true" SEQUENCE="false" DECIMALS="5" COMMENT="The maximum possible grade." PREVIOUS="mingrade" NEXT="rawgrade"/>
-        <FIELD NAME="rawgrade" TYPE="number" LENGTH="10" NOTNULL="true" SEQUENCE="false" DECIMALS="5" COMMENT="The points earned, should be between the minimum and maximum grades." PREVIOUS="maxgrade" NEXT="timecreated"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time created." PREVIOUS="rawgrade"/>
+        <FIELD NAME="rawgrade" TYPE="number" LENGTH="10" NOTNULL="true" SEQUENCE="false" DECIMALS="5" COMMENT="The points earned, should be between the minimum and maximum grades." PREVIOUS="maxgrade" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="rawgrade" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time created." PREVIOUS="timemodified"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="outcomeusedareaid"/>
         <KEY NAME="outcomeusedareaid" TYPE="foreign" FIELDS="outcomeusedareaid" REFTABLE="outcome_used_areas" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
         <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" PREVIOUS="outcomeusedareaid"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="itemid" UNIQUE="false" FIELDS="itemid"/>
+      </INDEXES>
     </TABLE>
-    <TABLE NAME="outome_marks" COMMENT="Graders will manually mark the user as having Met or Not Met an outcome." PREVIOUS="outcome_attempts" NEXT="outome_marks_history">
+    <TABLE NAME="outcome_marks" COMMENT="Graders will manually mark the user as having Met or Not Met an outcome." PREVIOUS="outcome_attempts" NEXT="outcome_marks_history">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="courseid"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="outcomeid"/>
@@ -147,10 +151,11 @@
         <KEY NAME="graderid" TYPE="foreign" FIELDS="graderid" REFTABLE="user" REFFIELDS="id" PREVIOUS="userid"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="outome_marks_history" COMMENT="Keep track of past markings." PREVIOUS="outome_marks" NEXT="outcome_awards">
+    <TABLE NAME="outcome_marks_history" COMMENT="Keep track of past markings." PREVIOUS="outcome_marks" NEXT="outcome_awards">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="outcomemarkid"/>
-        <FIELD NAME="outcomemarkid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="courseid"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="action"/>
+        <FIELD NAME="action" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="Action taken on the mark" PREVIOUS="id" NEXT="outcomemarkid"/>
+        <FIELD NAME="outcomemarkid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="action" NEXT="courseid"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="outcomemarkid" NEXT="outcomeid"/>
         <FIELD NAME="outcomeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="courseid" NEXT="userid"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="This is the user who is receiving the mark." PREVIOUS="outcomeid" NEXT="graderid"/>
@@ -167,7 +172,7 @@
         <KEY NAME="outcomemarkid" TYPE="foreign" FIELDS="outcomemarkid" REFTABLE="outcome_marks" REFFIELDS="id" PREVIOUS="graderid"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="outcome_awards" COMMENT="This preserves any outcomes earned by a user." PREVIOUS="outome_marks_history">
+    <TABLE NAME="outcome_awards" COMMENT="This preserves any outcomes earned by a user." PREVIOUS="outcome_marks_history">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="outcomeid"/>
         <FIELD NAME="outcomeid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="userid"/>

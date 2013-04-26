@@ -37,21 +37,31 @@ require_once(dirname(dirname(__DIR__)).'/service/area.php');
  */
 class outcome_service_area_test extends basic_testcase {
     public function test_set_area_used() {
-        $mock = $this->getMock(
-            'outcome_model_area_repository',
-            array('find_one', 'set_area_used')
-        );
+        $dbmock = $this->getMockBuilder('moodle_database')
+            ->setMethods(array('get_field', 'insert_record'))
+            ->getMockForAbstractClass();
 
-        $mock->expects($this->once())
-            ->method('set_area_used');
+        $dbmock->expects($this->once())
+            ->method('get_field')
+            ->withAnyParameters()
+            ->will($this->returnValue(false));
+
+        $dbmock->expects($this->once())
+            ->method('insert_record')
+            ->withAnyParameters()
+            ->will($this->returnValue(3));
+
+        $repo = new outcome_model_area_repository($dbmock);
 
         $model = new outcome_model_area();
         $model->component = 'mod_foo';
         $model->area = 'mod';
         $model->itemid = '10';
 
-        $service = new outcome_service_area($mock);
-        $service->set_area_used($model, 10);
+        $service = new outcome_service_area($repo);
+        $result  = $service->set_area_used($model, 10);
+
+        $this->assertTrue($result);
     }
 
     public function test_delete_area() {
@@ -69,5 +79,35 @@ class outcome_service_area_test extends basic_testcase {
 
         $service = new outcome_service_area($mock);
         $service->delete_area('mod_foo', 'mod', 10);
+    }
+
+    public function test_get_used_area_id() {
+        $cmid = '7';
+        $expectedusedareaid = '5';
+
+        $dbmock = $this->getMockBuilder('moodle_database')
+            ->setMethods(array('get_record_sql'))
+            ->getMockForAbstractClass();
+
+        $dbmock->expects($this->once())
+            ->method('get_record_sql')
+            ->withAnyParameters()
+            ->will($this->returnValue((object) array('areaid' => '100', 'usedareaid' => null)));
+
+        $mock = $this->getMock(
+            'outcome_model_area_repository',
+            array('set_area_used'),
+            array($dbmock)
+        );
+
+        $mock->expects($this->once())
+            ->method('set_area_used')
+            ->with($this->anything(), $cmid)
+            ->will($this->returnValue($expectedusedareaid));
+
+        $service = new outcome_service_area($mock);
+        $result = $service->get_used_area_id('mod_forum', 'mod', '1', $cmid);
+
+        $this->assertEquals($expectedusedareaid, $result);
     }
 }

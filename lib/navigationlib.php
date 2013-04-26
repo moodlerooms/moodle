@@ -3561,6 +3561,12 @@ class settings_navigation extends navigation_node {
             $coursenode->add(get_string('outcomes', 'grades'), $url, self::TYPE_SETTING, null, 'outcomes', new pix_icon('i/outcomes', ''));
         }
 
+        //  Add outcome if permitted
+        if (!empty($CFG->enableoutcomes) && has_capability('moodle/grade:edit', $coursecontext)) {
+            $url = new moodle_url('/outcome/course.php', array('contextid' => $coursecontext->id));
+            $coursenode->add(get_string('outcomes', 'outcome'), $url, self::TYPE_SETTING, null, 'outcome', new pix_icon('i/outcomes', ''));
+        }
+
         // Backup this course
         if (has_capability('moodle/backup:backupcourse', $coursecontext)) {
             $url = new moodle_url('/backup/backup.php', array('id'=>$course->id));

@@ -228,10 +228,10 @@ if (!empty($add)) {
     } else {
         $pageheading = get_string('updatinga', 'moodle', $fullmodulename);
     }
-
-    // todo: Probably have to wrap in a CFG setting to hide
-    require_once($CFG->dirroot.'/outcome/lib.php');
-    $data->outcomes = outcome_mapper()->get_outcome_mappings_for_form('mod_'.$module->name, 'mod', $cm->id);
+    if (!empty($CFG->enableoutcomes)) {
+        require_once($CFG->dirroot.'/outcome/lib.php');
+        $data->outcomes = outcome_mapper()->get_outcome_mappings_for_form('mod_'.$module->name, 'mod', $cm->id);
+    }
 
 } else {
     require_login();
@@ -371,11 +371,21 @@ if ($mform->is_cancelled()) {
             $fromform->introformat = $fromform->introeditor['format'];
             unset($fromform->introeditor);
         }
+        $outcomesync = false;
+        if (!empty($CFG->enableoutcomes)) {
+            require_once($CFG->dirroot.'/outcome/lib.php');
+            $outcomearea = outcome_mapper()->save_outcome_mappings('mod_'.$fromform->modulename, 'mod', $fromform->coursemodule, $fromform->outcomes);
+            if ($outcomearea) {
+                $outcomesync = outcome_area()->set_area_used($outcomearea, $fromform->coursemodule);
+            }
+        }
 
         if (!$updateinstancefunction($fromform, $mform)) {
             print_error('cannotupdatemod', '', course_get_url($course, $cw->section), $fromform->modulename);
         }
-
+        if ($outcomesync) {
+            outcome_attempt()->sync_mod_attempts_with_gradebook($fromform->coursemodule, $fromform->modulename);
+        }
         // make sure visibility is set correctly (in particular in calendar)
         if (has_capability('moodle/course:activityvisibility', $modcontext)) {
             set_coursemodule_visible($fromform->coursemodule, $fromform->visible);
@@ -448,6 +458,11 @@ if ($mform->is_cancelled()) {
             $fromform->intro       = $introeditor['text'];
             $fromform->introformat = $introeditor['format'];
         }
+        $outcomearea = false;
+        if (!empty($CFG->enableoutcomes)) {
+            require_once($CFG->dirroot.'/outcome/lib.php');
+            $outcomearea = outcome_mapper()->save_outcome_mappings('mod_'.$fromform->modulename, 'mod', $fromform->coursemodule, $fromform->outcomes);
+        }
 
         $returnfromfunc = $addinstancefunction($fromform, $mform);
 
@@ -461,6 +476,9 @@ if ($mform->is_cancelled()) {
                 print_error('invalidfunction', '', course_get_url($course, $cw->section));
             } else {
                 print_error('cannotaddnewmodule', '', course_get_url($course, $cw->section), $fromform->modulename);
+            }
+            if ($outcomearea) {
+                outcome_mapper()->remove_area($outcomearea);
             }
         }
 
@@ -494,6 +512,9 @@ if ($mform->is_cancelled()) {
         // Set up conditions
         if ($CFG->enableavailability) {
             condition_info::update_cm_from_form((object)array('id'=>$fromform->coursemodule), $fromform, false);
+        }
+        if ($outcomearea) {
+            outcome_area()->set_area_used($outcomearea, $fromform->coursemodule);
         }
 
         $eventname = 'mod_created';
@@ -623,13 +644,6 @@ if ($mform->is_cancelled()) {
                 $showgradingmanagement = $showgradingmanagement || $methodchanged;
             }
         }
-    }
-
-    // todo: Probably have to wrap in a CFG setting to hide
-    require_once($CFG->dirroot.'/outcome/lib.php');
-    $outcomearea = outcome_mapper()->save_outcome_mappings('mod_'.$fromform->modulename, 'mod', $fromform->coursemodule, $fromform->outcomes);
-    if ($outcomearea) {
-        outcome_area()->set_area_used($outcomearea, $fromform->coursemodule);
     }
 
     rebuild_course_cache($course->id);

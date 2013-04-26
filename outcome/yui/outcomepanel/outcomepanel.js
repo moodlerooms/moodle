@@ -2,12 +2,12 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
     var NAME = 'core_outcome_outcomepanel',
 
     // Shortcuts, etc
+        IO,
         Lang = Y.Lang,
         OUTCOME_SET_LIST = undefined,
         OUTCOME_LIST = undefined,
         EVENT_SAVE = 'save',
         NODE_CONTAINER,
-        URL_AJAX = M.cfg.wwwroot + '/outcome/ajax.php',
         PANEL = 'panel',
         TEMPLATE_COMPILED,
         CSS = {
@@ -25,7 +25,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
             '<div class="{{../../cssOutcomeList}}">' +
             '<span class="accesshide" aria-hidden="true">{{getString "outcomesforx" name}}</span>' +
             '{{#each outcomeList}}' +
-            '<div class="outcome" tabindex="-1" role="button" data-outcomeid="{{id}}">{{name}}</div>' +
+            '<div class="outcome" tabindex="-1" role="button" data-outcomeid="{{id}}">{{description}}</div>' +
             '{{/each}}' +
             '</div>' +
             '</div>' +
@@ -50,6 +50,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                 // Register helpers
                 Y.Handlebars.registerHelper('getString', renderGetStringHelper);
                 TEMPLATE_COMPILED = Y.Handlebars.compile(TEMPLATE);
+                IO = new M.core_outcome.SimpleIO({ contextId: this.get('contextId') });
             },
 
             /**
@@ -80,11 +81,10 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                     callback.call(this);
                     return;
                 }
-                this._do_io({
-                    contextid: this.get('contextid'),
-                    action: 'get_mappable_outcomes'
-                }, function(data) {
-                    if (!Lang.isArray(data.outcomeSetList) || data.outcomeSetList.length === 0) {
+                IO.send({ action: 'get_mappable_outcomes' }, function(data) {
+                    if (!Lang.isArray(data.outcomeSetList) || data.outcomeSetList.length === 0 ||
+                        !Lang.isArray(data.outcomeList) || data.outcomeList.length === 0) {
+
                         new M.core.alert({
                             title: M.str.moodle.error,
                             message: M.str.outcome.nooutcomesfound,
@@ -102,7 +102,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
 
                         callback.call(this);
                     }
-                });
+                }, this);
             },
 
             /**
@@ -256,7 +256,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                     render: true,
                     visible: false,
                     modal: true,
-                    zIndex: 1000
+                    zIndex: 5000
                 });
 
                 panel.plug(M.core_outcome.accessiblepanel);
@@ -272,34 +272,6 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                 });
 
                 return panel;
-            },
-
-            /**
-             * Helper method to do a AJAX request and to do error handling
-             * @param data
-             * @param callback
-             * @private
-             */
-            _do_io: function(data, callback) {
-                Y.io(URL_AJAX, {
-                    context: this,
-                    data: data,
-                    on: {
-                        complete: function(id, response) {
-                            try {
-                                var data = Y.JSON.parse(response.responseText);
-                                if (Lang.isValue(data.error)) {
-                                    new M.core.ajaxException(data);
-                                    return;
-                                }
-                            } catch (e) {
-                                new M.core.exception(e);
-                                return;
-                            }
-                            callback.call(this, data);
-                        }
-                    }
-                });
             }
         },
         {
@@ -308,7 +280,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                 /**
                  * Current context ID, used for AJAX requests
                  */
-                contextid: {},
+                contextId: {},
                 /**
                  * Allow multiple outcomes to be selected or not
                  */
@@ -334,5 +306,5 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
         return new OUTCOMEPANEL(config);
     };
 }, '@VERSION@', {
-    requires: ['handlebars', 'json-parse', 'json-stringify', 'moodle-core_outcome-outcomemodel', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-ariacontrol', 'moodle-core_outcome-ariacontrolled', 'moodle-core-notification']
+    requires: ['base', 'panel', 'handlebars', 'moodle-core_outcome-outcomemodel', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-ariacontrol', 'moodle-core_outcome-ariacontrolled', 'moodle-core-notification', 'moodle-core_outcome-simpleio']
 });

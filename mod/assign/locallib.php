@@ -602,6 +602,13 @@ class assign {
                 }
             }
 
+            // Remove all outcome attempts except for those directly related to the assignment.
+            if (!empty($CFG->enableoutcomes) and !is_null($this->get_course_module())) {
+                require_once($CFG->dirroot.'/outcome/lib.php');
+                $excludearea = outcome_area()->get_area('mod_assign', 'mod', $this->get_course_module()->id);
+                outcome_attempt()->remove_mod_attempts($this->get_course_module()->id, $excludearea);
+            }
+
             $assignssql = "SELECT a.id
                              FROM {assign} a
                            WHERE a.course=:course";
@@ -3130,6 +3137,9 @@ class assign {
 
         } else {
             $gradebookgrade = $this->convert_grade_for_gradebook($grade);
+        }
+        if ($gradinginstance = $this->get_grading_instance($gradebookgrade['userid'], true)) {
+            $gradinginstance->update_outcome_attempts($gradebookgrade['userid']);
         }
         // Grading is disabled, return.
         if ($this->grading_disabled($gradebookgrade['userid'])) {

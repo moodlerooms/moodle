@@ -730,6 +730,7 @@ ORDER BY
 
         if ($this->db->get_dbfamily() == 'mysql') {
             $this->delete_usage_records_for_mysql($qubaids);
+            $this->delete_question_outcome_attempts(array_keys($contextids));
             return;
         }
 
@@ -750,6 +751,8 @@ ORDER BY
 
         $this->db->delete_records_select('question_usages',
                 "{question_usages}.id {$qubaids->usage_id_in()}", $qubaids->usage_id_in_params());
+
+        $this->delete_question_outcome_attempts(array_keys($contextids));
     }
 
     /**
@@ -776,6 +779,54 @@ ORDER BY
              LEFT JOIN {question_attempt_step_data} qasd ON qasd.attemptstepid = qas.id
                  WHERE qu.id ' . $qubaidtest,
                 $qubaids->usage_id_in_params());
+    }
+
+    /**
+     * This deletes all outcome attempts for any question attempts
+     * that no longer exist.
+     *
+     * This method cannot do a single delete because the outcome_attempts
+     * table is required in the query.  EG: If you did
+     * DELETE FROM outcome_attempts WHERE id IN(the below query)
+     * You would get an error like: "You can't specify target table
+     * 'mdl_outcome_attempts' for update in FROM clause"
+     *
+     * @param array $contextids
+     */
+    protected function delete_question_outcome_attempts($contextids) {
+        global $CFG;
+
+        if (empty($CFG->enableoutcomes)) {
+            return;
+        }
+        if (empty($contextids)) {
+            return;
+        }
+        list($sql, $params) = $this->db->get_in_or_equal($contextids);
+
+        $rs = $this->db->get_recordset_sql("
+            SELECT a.id
+              FROM {outcome_attempts} a
+        INNER JOIN {outcome_used_areas} ua ON ua.id = a.outcomeusedareaid
+        INNER JOIN {outcome_areas} area ON area.id = ua.outcomeareaid
+        INNER JOIN {context} c ON c.instanceid = ua.cmid AND c.contextlevel = ?
+   LEFT OUTER JOIN {question_attempts} qa ON a.itemid = qa.id
+             WHERE area.area = ?
+               AND c.id $sql
+               AND qa.id IS NULL
+        ", array_merge(array(CONTEXT_MODULE, 'qtype'), $params));
+
+        $ids = array();
+        while ($rs->valid()) {
+            $ids[] = $rs->current()->id;
+            $rs->next();
+
+            if (count($ids) >= 100 or !$rs->valid()) {
+                $this->db->delete_records_list('outcome_attempts', 'id', $ids);
+                $ids = array();
+            }
+        }
+        $rs->close();
     }
 
     /**

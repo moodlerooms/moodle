@@ -57,13 +57,14 @@ class outcome_service_area {
     }
 
     /**
-     * @param $component
-     * @param $area
-     * @param $itemid
+     * @param string $component
+     * @param string $area
+     * @param int $itemid
+     * @param int $strictness
      * @return bool|outcome_model_area
      */
-    public function get_area($component, $area, $itemid) {
-        return $this->areas->find_one($component, $area, $itemid);
+    public function get_area($component, $area, $itemid, $strictness = IGNORE_MISSING) {
+        return $this->areas->find_one($component, $area, $itemid, $strictness);
     }
 
     /**
@@ -71,9 +72,11 @@ class outcome_service_area {
      *
      * @param outcome_model_area $model
      * @param int $cmid
+     * @return boolean True if the outcome_used_areas record was created, false otherwise
      */
     public function set_area_used(outcome_model_area $model, $cmid) {
-        $this->areas->set_area_used($model, $cmid);
+        $this->areas->set_area_used($model, $cmid, $created);
+        return $created;
     }
 
     /**
@@ -95,6 +98,31 @@ class outcome_service_area {
      */
     public function unset_area_used(outcome_model_area $model, $cmid) {
         $this->areas->unset_area_used($model, $cmid);
+    }
+
+    /**
+     * @param string $component
+     * @param string $area
+     * @param int $itemid
+     * @param int $cmid
+     * @param bool $recover If the used area ID is not found, generate it
+     * @return bool|int
+     */
+    public function get_used_area_id($component, $area, $itemid, $cmid, $recover = true) {
+        $model            = new outcome_model_area();
+        $model->component = $component;
+        $model->area      = $area;
+        $model->itemid    = $itemid;
+
+        $id = $this->areas->fetch_area_used_id($model, $cmid);
+
+        if (!empty($id)) {
+            return $id;
+        } else if ($recover and !empty($model->id)) {
+            // Disaster recovery - set area as used.
+            return $this->areas->set_area_used($model, $cmid);
+        }
+        return false;
     }
 
     /**

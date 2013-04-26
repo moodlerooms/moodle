@@ -111,7 +111,7 @@ class MoodleQuickForm_map_outcome_set extends HTML_QuickForm_element {
             array(array(
                 'srcNode'   => '#'.$randomid,
                 'isFrozen'  => $this->_flagFrozen,
-                'contextid' => $PAGE->context->id,
+                'contextId' => $PAGE->context->id,
             ))
         );
         $PAGE->requires->strings_for_js(array(

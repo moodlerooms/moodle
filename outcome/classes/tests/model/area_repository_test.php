@@ -108,10 +108,22 @@ class outcome_model_area_repository_test extends advanced_testcase {
         $outcome->id = 3;
 
         $repo = new outcome_model_area_repository();
-        $repo->save_area_outcomes($this->_area, array('3' => $outcome));
+        $repo->save_area_outcomes($this->_area, array($outcome));
 
         $this->assertTrue($DB->record_exists('outcome_area_outcomes', array('outcomeid' => 1)), 'Existing outcome remains');
         $this->assertTrue($DB->record_exists('outcome_area_outcomes', array('outcomeid' => 3)), 'New outcome added');
+    }
+
+    public function test_remove_area_outcomes() {
+        global $DB;
+
+        $outcome     = new outcome_model_outcome();
+        $outcome->id = 1;
+
+        $repo = new outcome_model_area_repository();
+        $repo->remove_area_outcomes($this->_area, array($outcome));
+
+        $this->assertFalse($DB->record_exists('outcome_area_outcomes', array('outcomeid' => 1)), 'Existing outcome removed');
     }
 
     public function test_set_area_used() {
@@ -120,10 +132,21 @@ class outcome_model_area_repository_test extends advanced_testcase {
         $outcome = new outcome_model_outcome();
         $outcome->id = 3;
 
-        $repo = new outcome_model_area_repository();
-        $repo->set_area_used($this->_area, 1);
+        // Tests when the area is already used.
+        $repo     = new outcome_model_area_repository();
+        $result   = $repo->set_area_used($this->_area, 1, $created);
+        $expected = $DB->get_field('outcome_used_areas', 'id', array('outcomeareaid' => $this->_area->id, 'cmid' => 1), MUST_EXIST);
 
-        $this->assertTrue($DB->record_exists('outcome_used_areas', array('outcomeareaid' => $this->_area->id)));
+        $this->assertFalse($created);
+        $this->assertEquals($expected, $result);
+
+        // Tests when the area is not already used.
+        $repo     = new outcome_model_area_repository();
+        $result   = $repo->set_area_used($this->_area, 2, $created);
+        $expected = $DB->get_field('outcome_used_areas', 'id', array('outcomeareaid' => $this->_area->id, 'cmid' => 2), MUST_EXIST);
+
+        $this->assertTrue($created);
+        $this->assertEquals($expected, $result);
     }
 
     public function test_set_area_used_by_many() {
@@ -152,6 +175,23 @@ class outcome_model_area_repository_test extends advanced_testcase {
         $repo->unset_area_used($this->_area, 1);
 
         $this->assertFalse($DB->record_exists('outcome_used_areas', array('outcomeareaid' => $this->_area->id)));
+    }
+
+    public function test_fetch_area_used_id() {
+        $repo = new outcome_model_area_repository();
+
+        $id = $repo->fetch_area_used_id($this->_area, 1);
+        $this->assertEquals('1', $id);
+
+        $id = $repo->fetch_area_used_id($this->_area, 2);
+        $this->assertFalse($id);
+
+        // Test fetching without model ID.
+        $expected = $this->_area->id;
+        $this->_area->id = null;
+        $id = $repo->fetch_area_used_id($this->_area, 1);
+        $this->assertEquals('1', $id);
+        $this->assertEquals($expected, $this->_area->id, 'Model ID was re-populated');
     }
 
     public function test_remove() {

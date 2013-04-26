@@ -201,9 +201,8 @@ class gradingform_rubric_controller extends gradingform_controller {
                     }
                 }
             }
-            // todo: Probably have to wrap in a CFG setting to hide
             // Save criterion outcome.
-            if ($doupdate) {
+            if ($doupdate and !empty($CFG->enableoutcomes)) {
                 $outcome = null;
                 if (!empty($criterion['outcomeid'])) {
                     $outcome = $criterion['outcomeid'];
@@ -270,7 +269,9 @@ class gradingform_rubric_controller extends gradingform_controller {
                     $DB->delete_records('gradingform_rubric_levels', array('criterionid' => $id));
 
                     // Remove criterion outcome area.
-                    outcome_area()->delete_area('gradingform_rubric', 'criterion', $id);
+                    if (!empty($CFG->enableoutcomes)) {
+                        outcome_area()->delete_area('gradingform_rubric', 'criterion', $id);
+                    }
                 }
                 $haschanges[3] = true;
             }
@@ -362,8 +363,7 @@ class gradingform_rubric_controller extends gradingform_controller {
                 $this->definition->rubric_criteria[$rcid]['levels'] = array_reverse($this->definition->rubric_criteria[$rcid]['levels'], true);
             }
         }
-        // todo: Probably have to wrap in a CFG setting to hide
-        if (!empty($this->definition->rubric_criteria)) {
+        if (!empty($CFG->enableoutcomes) and !empty($this->definition->rubric_criteria)) {
             require_once($CFG->dirroot.'/outcome/lib.php');
 
             $mappings = outcome_mapper()->get_many_outcome_mappings(
@@ -375,7 +375,7 @@ class gradingform_rubric_controller extends gradingform_controller {
                 /** @var $outcome outcome_model_outcome */
                 $outcome = current($outcomes);
                 $this->definition->rubric_criteria[$criteriaid]['outcomeid']         = $outcome->id;
-                $this->definition->rubric_criteria[$criteriaid]['description']       = $outcome->name;
+                $this->definition->rubric_criteria[$criteriaid]['description']       = $outcome->description;
                 $this->definition->rubric_criteria[$criteriaid]['descriptionformat'] = FORMAT_MOODLE;
             }
         }
@@ -813,6 +813,41 @@ class gradingform_rubric_instance extends gradingform_instance {
         $this->get_rubric_filling(true);
     }
 
+    public function generate_outcome_attempts() {
+        $attempts = array();
+        $grade    = $this->get_rubric_filling();
+        foreach ($grade['criteria'] as $criterionid => $record) {
+            $criterion = $this->get_controller()->get_definition()->rubric_criteria[$criterionid];
+
+            if (empty($criterion['outcomeid'])) {
+                continue;
+            }
+            $scores = array();
+            foreach ($criterion['levels'] as $level) {
+                $scores[] = $level['score'];
+            }
+            $maxgrade = max($scores);
+            $mingrade = min($scores);
+            $rawgrade = $criterion['levels'][$record['levelid']]['score'];
+
+            $id = outcome_area()->get_used_area_id(
+                'gradingform_rubric',
+                'criterion',
+                $criterionid,
+                $this->get_controller()->get_context()->instanceid
+            );
+            $attempt = new outcome_model_attempt();
+            $attempt->outcomeusedareaid = $id;
+            $attempt->mingrade = $mingrade;
+            $attempt->maxgrade = $maxgrade;
+            $attempt->rawgrade = $rawgrade;
+            $attempt->percentgrade = (($rawgrade - $mingrade) / ($maxgrade - $mingrade)) * 100;
+
+            $attempts[] = $attempt;
+        }
+        return $attempts;
+    }
+
     /**
      * Calculates the grade to be pushed to the gradebook
      *
@@ -897,4 +932,12 @@ class gradingform_rubric_instance extends gradingform_instance {
         $html .= $this->get_controller()->get_renderer($page)->display_rubric($criteria, $options, $mode, $gradingformelement->getName(), $value);
         return $html;
     }
+}
+
+/**
+ * @param outcome_model_area $area
+ * @return string
+ */
+function gradingform_rubric_get_item_name($area) {
+    return get_string('criterion', 'gradingform_rubric');
 }

@@ -96,7 +96,7 @@ class outcome_model_filter_repository extends outcome_model_abstract_repository 
         $rs = $this->db->get_recordset_sql('
             SELECT f.*
               FROM {outcome_sets} s
-              JOIN {outcome_used_sets} f ON s.id = f.outcomesetid
+        INNER JOIN {outcome_used_sets} f ON s.id = f.outcomesetid
              WHERE f.courseid = ?
                AND s.deleted = ?
         ', array($courseid, 0), $limitfrom, $limitnum);

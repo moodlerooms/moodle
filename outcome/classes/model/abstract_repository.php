@@ -65,12 +65,13 @@ abstract class outcome_model_abstract_repository {
     public function __construct(moodle_database $db = null) {
         global $DB;
 
-        if (is_null($db)) {
-            $this->db = $DB;
-        }
         if (empty($this->model) or empty($this->table)) {
             throw new coding_exception('The model and table properties must not be empty');
         }
+        if (is_null($db)) {
+            $db = $DB;
+        }
+        $this->db = $db;
     }
 
     /**

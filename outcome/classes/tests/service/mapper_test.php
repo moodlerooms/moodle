@@ -205,6 +205,71 @@ class outcome_service_mapper_test extends basic_testcase {
         $this->assertEquals(json_encode($expected), $result);
     }
 
+    public function test_save_outcome_mapping() {
+        $outcome     = new outcome_model_outcome();
+        $outcome->id = 1;
+
+        $areasmock = $this->getMock(
+            'outcome_model_area_repository',
+            array('find_one', 'save', 'remove_area_outcomes', 'save_area_outcomes')
+        );
+
+        $areasmock->expects($this->once())
+            ->method('find_one')
+            ->will($this->returnValue(false));
+
+        $areasmock->expects($this->once())
+            ->method('save')
+            ->withAnyParameters();
+
+        $areasmock->expects($this->once())
+            ->method('remove_area_outcomes')
+            ->withAnyParameters();
+
+        $areasmock->expects($this->once())
+            ->method('save_area_outcomes')
+            ->withAnyParameters();
+
+        $outcomesmock = $this->getMock(
+            'outcome_model_outcome_repository',
+            array('find_by_area')
+        );
+
+        $outcomesmock->expects($this->once())
+            ->method('find_by_area')
+            ->withAnyParameters()
+            ->will($this->returnValue(array($outcome->id => $outcome)));
+
+        $service = new outcome_service_mapper($outcomesmock, null, null, $areasmock);
+        $result  = $service->save_outcome_mapping('mod_foo', 'mod', 1, 1);
+        $this->assertInstanceOf('outcome_model_area', $result);
+    }
+
+    public function test_save_outcome_mapping_with_no_outcome() {
+        $area            = new outcome_model_area();
+        $area->component = 'mod_foo';
+        $area->area      = 'mod';
+        $area->itemid    = 1;
+
+        $areasmock = $this->getMock(
+            'outcome_model_area_repository',
+            array('find_one', 'remove')
+        );
+
+        $areasmock->expects($this->once())
+            ->method('find_one')
+            ->will($this->returnValue($area));
+
+        $areasmock->expects($this->once())
+            ->method('remove')
+            ->with($this->equalTo($area));
+
+        $service = new outcome_service_mapper(null, null, null, $areasmock);
+        $result  = $service->save_outcome_mapping('mod_foo', 'mod', 1, null);
+
+        $this->assertFalse($result);
+    }
+
     public function test_save_outcome_mappings() {
         $outcome     = new outcome_model_outcome();
         $outcome->id = 1;
@@ -243,5 +308,31 @@ class outcome_service_mapper_test extends basic_testcase {
 
         $service = new outcome_service_mapper($outcomesmock, null, null, $areasmock);
         $service->save_outcome_mappings('mod_foo', 'mod', 1, array(1));
+    }
+
+    public function test_save_outcome_mappings_with_no_outcomes() {
+
+        $area = new outcome_model_area();
+        $area->component = 'mod_foo';
+        $area->area = 'mod';
+        $area->itemid = 1;
+
+        $areasmock = $this->getMock(
+            'outcome_model_area_repository',
+            array('find_one', 'remove')
+        );
+
+        $areasmock->expects($this->once())
+            ->method('find_one')
+            ->will($this->returnValue($area));
+
+        $areasmock->expects($this->once())
+            ->method('remove')
+            ->with($area);
+
+        $service = new outcome_service_mapper(null, null, null, $areasmock);
+        $result = $service->save_outcome_mappings('mod_foo', 'mod', 1, array());
+
+        $this->assertFalse($result);
     }
 }

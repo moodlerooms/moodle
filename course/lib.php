@@ -3890,8 +3890,7 @@ function create_course($data, $editoroptions = NULL) {
     // set up enrolments
     enrol_course_updated(true, $course, $data);
 
-    // todo: Probably have to wrap in a CFG setting to hide
-    if (property_exists($data, 'outcomesets') and is_array($data->outcomesets)) {
+    if (!empty($CFG->enableoutcomes) and property_exists($data, 'outcomesets') and is_array($data->outcomesets)) {
         require_once($CFG->dirroot.'/outcome/lib.php');
         outcome_mapper()->save_outcome_set_mappings($course->id, $data->outcomesets);
     }
@@ -4002,8 +4001,7 @@ function update_course($data, $editoroptions = NULL) {
     // update enrol settings
     enrol_course_updated(false, $course, $data);
 
-    // todo: Probably have to wrap in a CFG setting to hide
-    if (property_exists($data, 'outcomesets') and is_array($data->outcomesets)) {
+    if (!empty($CFG->enableoutcomes) and property_exists($data, 'outcomesets') and is_array($data->outcomesets)) {
         require_once($CFG->dirroot.'/outcome/lib.php');
         outcome_mapper()->save_outcome_set_mappings($course->id, $data->outcomesets);
     }

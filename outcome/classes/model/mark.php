@@ -34,6 +34,16 @@ defined('MOODLE_INTERNAL') || die();
  * @author    Mark Nielsen
  */
 class outcome_model_mark {
+    /**
+     * The user has earned the outcome.
+     */
+    const EARNED = 1;
+
+    /**
+     * The user has not earned the outcome yet.
+     */
+    const NOT_EARNED = 0;
+
     public $id;
     public $courseid;
     public $outcomeid;

@@ -27,6 +27,10 @@
 defined('MOODLE_INTERNAL') || die;
 
 if ($hassiteconfig) {
-    // todo: Add extra capability check
-    $ADMIN->add('grades', new admin_externalpage('core_outcomes', get_string('outcomes', 'outcome'), "$CFG->wwwroot/outcome/admin.php?action=outcomeset"));
+    $ADMIN->add('grades', new admin_externalpage(
+        'core_outcomes',
+        get_string('outcomes', 'outcome'),
+        "$CFG->wwwroot/outcome/admin.php?action=outcomeset",
+        array('moodle/site:config', 'moodle/outcome:edit')
+    ));
 }

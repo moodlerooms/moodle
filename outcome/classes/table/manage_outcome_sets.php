@@ -71,13 +71,15 @@ class outcome_table_manage_outcome_sets extends table_sql {
 
         if ($this->started_output) {
             $PAGE->requires->yui_module(
-                'moodle-core_outcome-mappedcourses',
-                'M.core_outcome.init_mappedcourses',
+                'moodle-core_outcome-dynamicpanel',
+                'M.core_outcome.init_dynamicpanel',
                 array(array(
-                    'contextId' => $PAGE->context->id,
+                    'contextId'        => $PAGE->context->id,
+                    'delegateSelector' => '#manage-outcome-sets',
+                    'actionSelector'   => 'a.dynamic-panel',
                 ))
             );
-            $PAGE->requires->strings_for_js(array('close', 'mappedcourses'), 'outcome');
+            $PAGE->requires->strings_for_js(array('close'), 'outcome');
         }
     }
 
@@ -92,8 +94,9 @@ class outcome_table_manage_outcome_sets extends table_sql {
         }
         return html_writer::link('#', $row->count, array(
             'title' => get_string('mappedcoursesforx', 'outcome', format_string($row->name)),
-            'data-outcomesetid' => $row->id,
-            'data-action' => 'mappedcourses'
+            'class' => 'dynamic-panel',
+            'data-request-outcomesetid' => $row->id,
+            'data-request-action' => 'get_mapped_courses'
         ));
     }
 

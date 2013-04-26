@@ -289,7 +289,7 @@ M.gradingform_rubriceditor.selectoutcome = function (e) {
 
     if (M.gradingform_rubriceditor.outcomePanel === null) {
         M.gradingform_rubriceditor.outcomePanel = M.core_outcome.init_outcomepanel({
-            contextid: M.gradingform_rubriceditor.contextid,
+            contextId: M.gradingform_rubriceditor.contextid,
             allowMultiple: false
         });
         M.gradingform_rubriceditor.outcomePanel.on('save', M.gradingform_rubriceditor.addoutcome);
@@ -320,7 +320,7 @@ M.gradingform_rubriceditor.addoutcome = function() {
         if (node.one('textarea').hasClass('hiddenelement')) {
             return false;
         }
-        node.one('textarea').set('value', outcome.get('name'));
+        node.one('textarea').set('value', outcome.get('description'));
         node.one('.selectoutcome-box input').set('value', outcome.get('id'));
         return true;
     });

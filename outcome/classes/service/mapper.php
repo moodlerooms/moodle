@@ -111,14 +111,16 @@ class outcome_service_mapper {
         if (is_null($courseid)) {
             $courseid = $COURSE->id;
         }
-        $filters     = $this->filters->find_by_course($courseid);
-        $outcomesets = $this->outcomesets->find_by_area($model);
+        $filters  = $this->filters->find_by_course($courseid);
+        $areasets = $this->outcomesets->find_by_area($model);
 
-        $outcomes = array();
-        foreach ($outcomesets as $outcomeset) {
+        $outcomes    = array();
+        $outcomesets = array();
+        foreach ($areasets as $outcomeset) {
             foreach ($filters as $filter) {
                 if ($filter->outcomesetid == $outcomeset->id) {
                     $outcomes += $this->outcomes->find_by_area_and_filter($model, $filter);
+                    $outcomesets[] = $outcomeset;
                 }
             }
         }
@@ -318,6 +320,15 @@ class outcome_service_mapper {
         } else {
             return $model;
         }
+    }
+
+    /**
+     * Remove an outcome area and ALL data associated with it.
+     *
+     * @param outcome_model_area $model
+     */
+    public function remove_area(outcome_model_area $model) {
+        $this->areas->remove($model);
     }
 
     /**

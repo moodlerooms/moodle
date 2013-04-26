@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Set Controller
+ * Outcome Mapping AJAX Controller
  *
  * @package   core_outcome
  * @category  outcome
@@ -35,7 +35,7 @@ require_once(__DIR__.'/abstract.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_controller_ajax extends outcome_controller_abstract {
+class outcome_controller_mapping_ajax extends outcome_controller_abstract {
     /**
      * @var outcome_model_outcome_repository
      */
@@ -74,8 +74,6 @@ class outcome_controller_ajax extends outcome_controller_abstract {
         global $PAGE;
 
         switch($action) {
-            case 'validate_outcome_idnumber':
-            case 'is_outcome_idnumber_unique':
             case 'get_mapped_courses':
                 require_capability('moodle/outcome:edit', $PAGE->context);
                 break;
@@ -92,22 +90,6 @@ class outcome_controller_ajax extends outcome_controller_abstract {
     }
 
     /**
-     * Determines if an outcome idnumber is unique or not
-     *
-     * @return string
-     */
-    public function is_outcome_idnumber_unique_action() {
-        require_sesskey();
-
-        $outcomeid = required_param('outcomeid', PARAM_INT);
-        $idnumber  = required_param('idnumber', PARAM_TEXT);
-
-        $result = $this->outcomes->is_idnumber_unique($idnumber, $outcomeid);
-
-        return json_encode(array('result' => $result));
-    }
-
-    /**
      * Get a list of courses that are mapped to a particular outcome set
      *
      * @return string
@@ -118,23 +100,10 @@ class outcome_controller_ajax extends outcome_controller_abstract {
         $outcomeset = $this->outcomesets->find($outcomesetid);
         $courses    = $this->outcomesets->fetch_mapped_courses($outcomeset);
 
-        $result = array(
-            'heading' => get_string('coursesmappedtox', 'outcome', format_string($outcomeset->name)),
-            'courses' => array()
-        );
-        foreach ($courses as $course) {
-            $url = new moodle_url('/course/view.php', array('id' => $course->id));
-
-            $result['courses'][] = array(
-                'id'        => $course->id,
-                'shortname' => format_string($course->shortname),
-                'idnumber'  => format_string($course->idnumber),
-                'fullname'  => format_string($course->fullname),
-                'title'     => get_string('viewcoursex', 'outcome', format_string($course->fullname)),
-                'url'       => $url->out(),
-            );
-        }
-        return json_encode($result);
+        return json_encode(array(
+            'header' => get_string('coursesmappedtox', 'outcome', format_string($outcomeset->name)),
+            'body' => $this->renderer->mapped_courses_list($courses),
+        ));
     }
 
     /**

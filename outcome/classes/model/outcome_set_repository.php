@@ -76,16 +76,22 @@ class outcome_model_outcome_set_repository extends outcome_model_abstract_reposi
      * Find outcome sets that are used in a particular course
      *
      * @param int $courseid
+     * @param null|string $sort Add sorting
      * @return outcome_model_outcome_set[]
      */
-    public function find_used_by_course($courseid) {
-        $rs = $this->db->get_recordset_sql('
+    public function find_used_by_course($courseid, $sort = null) {
+        $sortsql = '';
+        if (!is_null($sort)) {
+            $sortsql = 'ORDER BY '.$sort;
+        }
+        $rs = $this->db->get_recordset_sql("
             SELECT s.*
               FROM {outcome_sets} s
-              JOIN {outcome_used_sets} u ON s.id = u.outcomesetid
+        INNER JOIN {outcome_used_sets} u ON s.id = u.outcomesetid
              WHERE u.courseid = ?
                AND s.deleted = ?
-        ', array($courseid, 0));
+          $sortsql
+        ", array($courseid, 0));
 
         return $this->map_to_models($rs);
     }
@@ -108,9 +114,9 @@ class outcome_model_outcome_set_repository extends outcome_model_abstract_reposi
         $rs = $this->db->get_recordset_sql("
             SELECT s.*
               FROM {outcome_sets} s
-              JOIN {outcome} o ON s.id = o.outcomesetid
-              JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
-              JOIN {outcome_areas} a ON a.id = ao.outcomeareaid
+        INNER JOIN {outcome} o ON s.id = o.outcomesetid
+        INNER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
+        INNER JOIN {outcome_areas} a ON a.id = ao.outcomeareaid
              WHERE $select
         ", $params);
 
@@ -145,8 +151,8 @@ class outcome_model_outcome_set_repository extends outcome_model_abstract_reposi
         $rs = $this->db->get_recordset_sql('
             SELECT m.value
               FROM {outcome_sets} s
-              JOIN {outcome} o ON s.id = o.outcomesetid
-              JOIN {outcome_metadata} m ON o.id = m.outcomeid
+        INNER JOIN {outcome} o ON s.id = o.outcomesetid
+        INNER JOIN {outcome_metadata} m ON o.id = m.outcomeid
              WHERE s.id = ?
                AND m.name = ?
           GROUP BY m.value

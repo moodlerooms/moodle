@@ -14,7 +14,7 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
          * @return {boolean}
          */
         NON_EMPTY_STRING_VALIDATOR = function(value) {
-            return Lang.isString(value) && value.length > 0;
+            return Lang.isString(value) && Lang.trim(value).length > 0;
         },
     // Setters
         /**
@@ -54,7 +54,11 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
          * @return {String|null}
          */
         SET_OPTIONAL_STRING = function(value) {
-            if (!Lang.isString(value) || value.length === 0) {
+            if (!Lang.isString(value)) {
+                return null;
+            }
+            value = Lang.trim(value);
+            if (value.length === 0) {
                 return null;
             }
             return value;
@@ -73,8 +77,8 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
          */
         validate: function(attributes, callback) {
             var errors = [];
-            if (Lang.isNull(attributes.name)) {
-                errors.push('nameRequired');
+            if (Lang.isNull(attributes.description)) {
+                errors.push('descriptionRequired');
             }
             if (Lang.isNull(attributes.idnumber)) {
                 errors.push('idnumberRequired');
@@ -97,14 +101,14 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
                                 var data = Y.JSON.parse(response.responseText);
                                 if (Lang.isValue(data.error)) {
                                     errors.push('idnumberFailedToValidate');
-                                    data.zIndex = 2000;
+                                    data.zIndex = 5000;
                                     new M.core.ajaxException(data);
                                 } else if (data.result === false) {
                                     errors.push('idnumberNotUnique');
                                 }
                             } catch (e) {
                                 errors.push('idnumberFailedToValidate');
-                                e.zIndex = 2000;
+                                e.zIndex = 5000;
                                 new M.core.exception(e);
                             }
                         }
@@ -133,10 +137,9 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
         ATTRS: {
             id: { value: null, validator: INT_VALIDATOR, setter: SET_INT },
             parentid: { value: null, setter: SET_OPTIONAL_INT },
-            idnumber: { value: null, validator: NON_EMPTY_STRING_VALIDATOR },
-            name: { value: null, validator: NON_EMPTY_STRING_VALIDATOR },
+            idnumber: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
             docnum: { value: null, setter: SET_OPTIONAL_STRING },
-            description: { value: null, setter: SET_OPTIONAL_STRING },
+            description: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
             assessable: { value: 1, validator: INT_VALIDATOR, setter: SET_BINARY_INT },
             deleted: { value: 0, validator: INT_VALIDATOR, setter: SET_BINARY_INT },
             sortorder: { value: 0, validator: INT_VALIDATOR, setter: SET_POSITIVE_INT },
@@ -295,7 +298,11 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
             if (!model.isNew()) {
                 return;
             }
+            // Preserve for below
+            var parentid = model.get('parentid');
+
             // Default, add to end of list
+            model.set('parentid', null);
             model.set('id', NEW_OUTCOME_ID);
             model.set('sortorder', this.size());
             this.add(model);
@@ -303,8 +310,8 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
             NEW_OUTCOME_ID--;
 
             // If parent ID is set, then move after last child
-            if (model.get('parentid') !== null) {
-                var parent = this.getById(model.get('parentid'));
+            if (parentid !== null) {
+                var parent = this.getById(parentid);
                 var children = this.filter_by_parentid(parent.get('id'));
 
                 if (children.length > 0) {
@@ -318,16 +325,25 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
         /**
          * Remove an outcome
          * @param outcome
-         * @returns {*}
          */
         remove_outcome: function(outcome) {
+            var children = this.filter_by_parentid(outcome.get('id'));
+
             if (outcome.get('id') < 0) {
                 this.remove(outcome);
-                this.close_sort_order_gap(outcome.get('sortorder'));
+
+                // Ensure we create no orphans.
+                Y.Array.each(children, function(child) {
+                    child.set('parentid', outcome.get('parentid'));
+                });
             } else {
                 outcome.set('deleted', 1);
             }
-            return outcome;
+            Y.Array.each(children, function(child) {
+                this.remove_outcome(child);
+            }, this);
+
+            this.repair_sort_order();
         },
 
         /**
@@ -374,8 +390,8 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
     }, {
         ATTRS: {
             id: { value: null, validator: INT_VALIDATOR, setter: SET_INT },
-            idnumber: { value: null, validator: NON_EMPTY_STRING_VALIDATOR },
-            name: { value: null, validator: NON_EMPTY_STRING_VALIDATOR },
+            idnumber: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
+            name: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
             description: { value: null, setter: SET_OPTIONAL_STRING },
             provider: { value: null, setter: SET_OPTIONAL_STRING },
             revision: { value: null, setter: SET_OPTIONAL_STRING },
@@ -405,5 +421,5 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
     M.core_outcome.OutcomeSetList = OUTCOME_SET_LIST;
 
 }, '@VERSION@', {
-    requires: ['model', 'model-list', 'io-base', 'moodle-core-notification']
+    requires: ['base', 'model', 'model-list', 'io-base', 'moodle-core-notification']
 });

@@ -38,7 +38,6 @@ require_once(__DIR__.'/abstract_repository.php');
  * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
- * @todo We probably want to provide a way to optionally include outcome metadata for increased performance
  */
 class outcome_model_outcome_repository extends outcome_model_abstract_repository {
     protected $model = 'outcome_model_outcome';
@@ -68,71 +67,69 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
     }
 
     /**
+     * Populate a set of outcomes with their metadata
+     *
      * @param outcome_model_outcome[] $outcomes
      * @return outcome_model_outcome[]
      */
-    protected function find_metadata(array $outcomes) {
+    public function find_metadata(array $outcomes) {
+        if (empty($outcomes)) {
+            return $outcomes;
+        }
         $rs = $this->db->get_recordset_list('outcome_metadata', 'outcomeid', array_keys($outcomes), 'id');
         return $this->map_metadata($rs, $outcomes);
     }
 
     /**
-     * Converts a filter into SQL that queries
-     * outcomes that are filtered by the filter.
+     * Converts a filter into a SQL object that filters outcomes.
      *
      * @param outcome_model_filter $filter
-     * @param string $extrawhere Additions to the where clause
-     * @param array $extraprams Extra params needed for the extra where clause
-     * @return array SQL and params
+     * @return array SQL object and params
      */
-    protected function filter_to_sql(outcome_model_filter $filter, $extrawhere = '', $extraprams = array()) {
-        $joins      = array();
-        $ors        = array();
-        $params     = array();
-        $joinparams = array();
-        $template   = 'LEFT JOIN {outcome_metadata} %1$s ON (o.id = %1$s.outcomeid AND %1$s.name = ?)';
+    public function filter_to_sql(outcome_model_filter $filter) {
+        $joins    = array();
+        $ors      = array();
+        $params   = array('filteroutcomesetid' => $filter->outcomesetid);
+        $template = 'LEFT JOIN {outcome_metadata} %1$s ON (o.id = %1$s.outcomeid AND %1$s.name = :filterjoin%1$s)';
+        $sql      = (object) array('join' => '', 'where' => '', 'groupby' => '');
+        $count    = 0;
 
         foreach ($filter->filter as $info) {
             $ands = array();
             foreach ($this->metadatafields as $field) {
                 if (array_key_exists($field, $info) and !is_null($info[$field])) {
-                    $ands[]   = "$field.value = ?";
-                    $params[] = $info[$field];
+                    $ands[] = "$field.value = :filter$field$count";
+                    $params["filter$field$count"] = $info[$field];
 
                     if (!array_key_exists($field, $joins)) {
                         $joins[$field] = sprintf($template, $field);
-                        $joinparams[] = $field;
+                        $params['filterjoin'.$field] = $field;
                     }
+                    $count++;
                 }
             }
             // If empty, then bail because we are selecting all in the outcome set.
             if (empty($ands)) {
-                return array(
-                    "SELECT o.* FROM {outcome} o WHERE o.outcomesetid = ? $extrawhere",
-                    array_merge(array($filter->outcomesetid), $extraprams)
-                );
+                $sql->where = 'o.outcomesetid = :filteroutcomesetid';
+                return array($sql, array('filteroutcomesetid' => $filter->outcomesetid));
             }
             $ors[] = implode(' AND ', $ands);
         }
-        $joinsql = implode(' ', $joins);
-        $orsql   = '('.implode(' OR ', $ors).')';
+        $sql->join    = implode(' ', $joins);
+        $sql->where   = '('.implode(' OR ', $ors).') AND o.outcomesetid = :filteroutcomesetid';
+        $sql->groupby = 'GROUP BY o.id';
 
-        return array("
-            SELECT o.*
-              FROM {outcome} o $joinsql
-             WHERE $orsql AND o.outcomesetid = ? $extrawhere
-          GROUP BY o.id
-        ", array_merge($joinparams, $params, array($filter->outcomesetid), $extraprams));
+        return array($sql, $params);
     }
 
     /**
-     * @param int $id The outcome set ID
+     * @param int $id The outcome ID
      * @param int $strictness
      * @return outcome_model_outcome|boolean Returns false if
      *         $strictness = IGNORE_MISSING and record not round
      */
     public function find($id, $strictness = IGNORE_MISSING) {
-        return $this->find_one_by(array('id' => $id), $strictness);
+        return $this->_find_one_by(array('id' => $id), $strictness);
     }
 
     /**
@@ -142,11 +139,7 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
      *         $strictness = IGNORE_MISSING and record not round
      */
     public function find_one_by(array $conditions, $strictness = IGNORE_MISSING) {
-        $model = $this->_find_one_by($conditions, $strictness);
-        if ($model !== false) {
-            $this->find_metadata(array($model->id => $model));
-        }
-        return $model;
+        return $this->_find_one_by($conditions, $strictness);
     }
 
     /**
@@ -155,10 +148,9 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
      * @param int $limitfrom
      * @param int $limitnum
      * @return outcome_model_outcome[]
-     * @todo More efficient way to load up metadata?
      */
     public function find_by(array $conditions, $sort = '', $limitfrom = 0, $limitnum = 0) {
-        return $this->find_metadata($this->_find_by($conditions, $sort, $limitfrom, $limitnum));
+        return $this->_find_by($conditions, $sort, $limitfrom, $limitnum);
     }
 
     /**
@@ -166,26 +158,32 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
      * @return outcome_model_outcome[]
      */
     public function find_by_ids(array $ids) {
-        return $this->find_metadata($this->_find_by_ids($ids));
+        return $this->_find_by_ids($ids);
     }
 
     /**
      * Find all outcomes in a given outcome set.
      *
      * @param outcome_model_outcome_set $outcomeset
+     * @param bool $metadata Include outcome metadata or not
      * @return outcome_model_outcome[]
      */
-    public function find_by_outcome_set(outcome_model_outcome_set $outcomeset) {
-        $rs     = $this->db->get_recordset('outcome', array('outcomesetid' => $outcomeset->id));
-        $metars = $this->db->get_recordset_sql('
-            SELECT m.*
-              FROM {outcome} o
-              JOIN {outcome_metadata} m ON o.id = m.outcomeid
-             WHERE o.outcomesetid = ?
-          ORDER BY m.id
-        ', array($outcomeset->id));
+    public function find_by_outcome_set(outcome_model_outcome_set $outcomeset, $metadata = false) {
+        $rs     = $this->db->get_recordset('outcome', array('outcomesetid' => $outcomeset->id), 'sortorder');
+        $models = $this->map_to_models($rs);
 
-        return $this->map_metadata($metars, $this->map_to_models($rs));
+        if ($metadata) {
+            $metars = $this->db->get_recordset_sql('
+                SELECT m.*
+                  FROM {outcome} o
+            INNER JOIN {outcome_metadata} m ON o.id = m.outcomeid
+                 WHERE o.outcomesetid = ?
+              ORDER BY m.id
+            ', array($outcomeset->id));
+
+            $this->map_metadata($metars, $models);
+        }
+        return $models;
     }
 
     /**
@@ -196,26 +194,23 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
      * @return outcome_model_outcome[]
      */
     public function find_by_filter(outcome_model_filter $filter, $mappable = true) {
+        list($sql, $params) = $this->filter_to_sql($filter);
+
         $extrawheresql = '';
-        $extraparams   = array();
         if ($mappable) {
-            $extrawheresql = "AND o.deleted = ? AND o.assessable = ?";
-            $extraparams   = array(0, 1);
+            $extrawheresql = 'AND o.deleted = :deleted AND o.assessable = :assessable';
+            $params['deleted'] = 0;
+            $params['assessable'] = 1;
         }
-        list($sql, $params) = $this->filter_to_sql($filter, $extrawheresql, $extraparams);
-
-        $rs = $this->db->get_recordset_sql($sql, $params);
-
-        $metars = $this->db->get_recordset_sql("
-            SELECT m.*
-              FROM {outcome_metadata} m
-        INNER JOIN (
-            $sql
-        ) o ON o.id = m.outcomeid
-          ORDER BY m.id
+        $rs = $this->db->get_recordset_sql("
+            SELECT o.*
+              FROM {outcome} o
+                   $sql->join
+             WHERE $sql->where $extrawheresql
+                   $sql->groupby
         ", $params);
 
-        return $this->map_metadata($metars, $this->map_to_models($rs));
+        return $this->map_to_models($rs);
     }
 
     /**
@@ -236,24 +231,13 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
         $rs = $this->db->get_recordset_sql("
             SELECT o.*
               FROM {outcome} o
-              JOIN {outcome_sets} s ON s.id = o.outcomesetid
-              JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
-              JOIN {outcome_areas} a ON a.id = ao.outcomeareaid
+        INNER JOIN {outcome_sets} s ON s.id = o.outcomesetid
+        INNER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
+        INNER JOIN {outcome_areas} a ON a.id = ao.outcomeareaid
              WHERE $select
         ", $params);
 
-        $metars = $this->db->get_recordset_sql("
-            SELECT m.*
-              FROM {outcome} o
-              JOIN {outcome_metadata} m ON o.id = m.outcomeid
-              JOIN {outcome_sets} s ON s.id = o.outcomesetid
-              JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
-              JOIN {outcome_areas} a ON a.id = ao.outcomeareaid
-             WHERE $select
-          ORDER BY m.id
-        ", $params);
-
-        return $this->map_metadata($metars, $this->map_to_models($rs));
+        return $this->map_to_models($rs);
     }
 
     /**
@@ -265,21 +249,17 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
      * @return object[]
      */
     public function find_by_area_and_filter(outcome_model_area $area, outcome_model_filter $filter) {
-        list($sql, $params) = $this->filter_to_sql(
-            $filter,
-            "AND o.deleted = ? AND o.assessable = ?",
-            array(0, 1)
-        );
+        list($sql, $params) = $this->filter_to_sql($filter);
+
         $rs = $this->db->get_recordset_sql("
             SELECT o.*
               FROM {outcome} o
+                   $sql->join
         INNER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
         INNER JOIN {outcome_areas} a ON a.id = ao.outcomeareaid
-        INNER JOIN (
-                  $sql
-              ) filter ON filter.id = o.id
-             WHERE a.id = ?
-        ", array_merge($params, array($area->id)));
+             WHERE $sql->where AND a.id = :areaid AND o.deleted = :deleted AND o.assessable = :assessable
+          $sql->groupby
+        ", array_merge($params, array('areaid' => $area->id, 'deleted' => 0, 'assessable' => 1)));
 
         return $this->map_to_models($rs);
     }
@@ -367,5 +347,14 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
             }
         }
         return $this;
+    }
+
+    /**
+     * Update an outcomes sort order field
+     *
+     * @param outcome_model_outcome $model
+     */
+    public function update_sort_order(outcome_model_outcome $model) {
+        $this->db->set_field('outcome', 'sortorder', $model->sortorder, array('id' => $model->id));
     }
 }

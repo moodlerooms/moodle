@@ -38,9 +38,8 @@ class outcome_model_outcome {
     public $outcomesetid;
     public $parentid;
     public $idnumber;
-    public $name;
     public $docnum = null;
-    public $description = null;
+    public $description;
     public $assessable = 1;
     public $deleted = 0;
     public $sortorder = 0;

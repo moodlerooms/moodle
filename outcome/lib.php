@@ -26,6 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__.'/classes/model/attempt.php');
+require_once(__DIR__.'/classes/service/factory.php');
+
 /**
  * This service helps with mapping outcomes
  * and outcome sets to content.
@@ -34,30 +37,25 @@ defined('MOODLE_INTERNAL') || die();
  * @see outcome_service_mapper
  */
 function outcome_mapper() {
-
-    static $mapper;
-
-    if (!$mapper instanceof outcome_service_mapper) {
-        require_once(__DIR__.'/classes/service/mapper.php');
-        $mapper = new outcome_service_mapper();
-    }
-    return $mapper;
+    return outcome_service_factory::build('mapper');
 }
 
 /**
- * This service helps with managing
- * outcome areas.
+ * This service helps with managing outcome areas.
  *
  * @return outcome_service_area
  * @see outcome_service_area
  */
 function outcome_area() {
+    return outcome_service_factory::build('area');
+}
 
-    static $area;
-
-    if (!$area instanceof outcome_service_area) {
-        require_once(__DIR__.'/classes/service/area.php');
-        $area = new outcome_service_area();
-    }
-    return $area;
+/**
+ * This service helps with managing outcome attempts.
+ *
+ * @return outcome_service_attempt
+ * @see outcome_service_attempt
+ */
+function outcome_attempt() {
+    return outcome_service_factory::build('attempt');
 }

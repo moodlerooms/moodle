@@ -403,12 +403,13 @@ abstract class moodleform_mod extends moodleform {
         global $COURSE, $CFG, $DB;
         $mform =& $this->_form;
 
-        // todo: Probably have to wrap in a CFG setting to hide
-        $mform->addElement('header', 'outcomesheader', get_string('outcomes', 'outcome'));
-        $mform->addElement('mapoutcome', 'outcomes');
-        $mform->addHelpButton('outcomes', 'selectoutcomes', 'outcome');
-        if (!has_capability('moodle/outcome:mapoutcomes', $this->context)) {
-            $mform->hardFreeze('outcomes');
+        if (!empty($CFG->enableoutcomes)) {
+            $mform->addElement('header', 'outcomesheader', get_string('outcomes', 'outcome'));
+            $mform->addElement('mapoutcome', 'outcomes');
+            $mform->addHelpButton('outcomes', 'selectoutcomes', 'outcome');
+            if (!has_capability('moodle/outcome:mapoutcomes', $this->context)) {
+                $mform->hardFreeze('outcomes');
+            }
         }
 
         $this->_outcomesused = false;

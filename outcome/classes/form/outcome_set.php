@@ -54,11 +54,11 @@ class outcome_form_outcome_set extends moodleform {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        $mform->addElement('text', 'name', get_string('name', 'outcome'), array('size'=>'40'));
+        $mform->addElement('text', 'name', get_string('name', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-        $mform->addElement('text', 'idnumber', get_string('idnumber', 'outcome'), array('size'=>'40'));
+        $mform->addElement('text', 'idnumber', get_string('idnumber', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
         $mform->setType('idnumber', PARAM_TEXT);
         $mform->addRule('idnumber', null, 'required', null, 'client');
         $mform->addHelpButton('idnumber', 'idnumber', 'outcome');
@@ -67,12 +67,12 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setType('description', PARAM_TEXT);
         $mform->setAdvanced('description');
 
-        $mform->addElement('text', 'provider', get_string('provider', 'outcome'), array('size'=>'5'));
+        $mform->addElement('text', 'provider', get_string('provider', 'outcome'), array('size'=>'5', 'maxlength' => '255'));
         $mform->setType('provider', PARAM_TEXT);
         $mform->setAdvanced('provider');
         $mform->addHelpButton('provider', 'provider', 'outcome');
 
-        $mform->addElement('text', 'region', get_string('region', 'outcome'), array('size'=>'5'));
+        $mform->addElement('text', 'region', get_string('region', 'outcome'), array('size'=>'5', 'maxlength' => '255'));
         $mform->setType('region', PARAM_TEXT);
         $mform->setAdvanced('region');
         $mform->addHelpButton('region', 'region', 'outcome');
@@ -99,35 +99,35 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setType('outcome_parentid', PARAM_INT);
 
         $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
-            array('class' => 'error', 'data-errorcode' => 'nameRequired')));
-        $mform->addElement('text', 'outcome_name', get_string('name', 'outcome'), array('size'=>'40'));
-        $mform->setType('outcome_name', PARAM_TEXT);
-
-        $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
             array('class' => 'error', 'data-errorcode' => 'idnumberRequired')));
         $mform->addElement('html', html_writer::tag('div', get_string('idnumbernotunique', 'outcome'),
             array('class' => 'error', 'data-errorcode' => 'idnumberNotUnique')));
         $mform->addElement('html', html_writer::tag('div', get_string('idnumbervalidationfailed', 'outcome'),
             array('class' => 'error', 'data-errorcode' => 'idnumberFailedToValidate')));
-        $mform->addElement('text', 'outcome_idnumber', get_string('idnumber', 'outcome'), array('size' => '40'));
+        $mform->addElement('text', 'outcome_idnumber', get_string('idnumber', 'outcome'),
+            array('size' => '40', 'maxlength' => '255'));
         $mform->setType('outcome_idnumber', PARAM_TEXT);
         $mform->addHelpButton('outcome_idnumber', 'idnumber', 'outcome');
 
-        $mform->addElement('text', 'outcome_docnum', get_string('docnum', 'outcome'), array('size'=>'40'));
+        $mform->addElement('text', 'outcome_docnum', get_string('docnum', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
         $mform->setType('outcome_docnum', PARAM_TEXT);
         $mform->addHelpButton('outcome_docnum', 'docnum', 'outcome');
 
-        $mform->addElement('text', 'outcome_subjects', get_string('subjects', 'outcome'), array('size' => '40'));
+        $mform->addElement('text', 'outcome_subjects', get_string('subjects', 'outcome'),
+            array('size' => '40', 'maxlength' => '1333'));
         $mform->setType('outcome_subjects', PARAM_TEXT);
         $mform->addHelpButton('outcome_subjects', 'subjects', 'outcome');
 
-        $mform->addElement('text', 'outcome_edulevels', get_string('educationlevels', 'outcome'), array('size' => '40'));
+        $mform->addElement('text', 'outcome_edulevels', get_string('educationlevels', 'outcome'),
+            array('size' => '40', 'maxlength' => '1333'));
         $mform->setType('outcome_edulevels', PARAM_TEXT);
         $mform->addHelpButton('outcome_edulevels', 'educationlevels', 'outcome');
 
         $mform->addElement('checkbox', 'outcome_assessable', '', '&nbsp;'.get_string('assessable', 'outcome'));
         $mform->addHelpButton('outcome_assessable', 'assessable', 'outcome');
 
+        $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
+            array('class' => 'error', 'data-errorcode' => 'descriptionRequired')));
         $mform->addElement('textarea', 'outcome_description',
             get_string('description', 'outcome'), array('rows' => '5', 'cols' => '40'));
         $mform->setType('outcome_description', PARAM_TEXT);
@@ -158,8 +158,15 @@ class outcome_form_outcome_set extends moodleform {
         require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
 
         $repo = new outcome_model_outcome_set_repository();
-        if (!$repo->is_idnumber_unique($data['idnumber'], $data['id'])) {
+        $idnumber = trim($data['idnumber']);
+        if (empty($idnumber)) {
+            $errors['idnumber'] = get_string('err_required', 'form');
+        } else if (!$repo->is_idnumber_unique($idnumber, $data['id'])) {
             $errors['idnumber'] = get_string('idnumbernotunique', 'outcome');
+        }
+        $name = trim($data['name']);
+        if (empty($name)) {
+            $errors['name'] = get_string('err_required', 'form');
         }
         return $errors;
     }

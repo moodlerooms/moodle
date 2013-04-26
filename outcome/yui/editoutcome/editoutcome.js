@@ -21,7 +21,6 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
         INPUT_HIDDEN = 'input[type=hidden]',
         INPUT_ID = '#outcome_id',
         INPUT_PARENTID = '#outcome_parentid',
-        INPUT_NAME = 'input[name=outcome_name]',
         INPUT_DOCNUM = 'input[name=outcome_docnum]',
         INPUT_IDNUMBER = 'input[name=outcome_idnumber]',
         INPUT_SUBJECTS = 'input[name=outcome_subjects]',
@@ -57,14 +56,14 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
             '{{#if leaf}}{{className "leaf"}}{{/if}}' +
             '"' +
             '{{#if children}} data-action="folder" role="button"{{/if}}' +
-            '>{{docnum}} {{name}}</span> ' +
+            '>{{docnum}} {{description}}</span> ' +
             '<span class="' +
             '{{className "actions"}}' +
             '">' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="add" tabindex="-1" title="' + '{{title "addchildoutcome" name}}' + '">' + M.str.outcome.add + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="edit" tabindex="-1" title="' + '{{title "editx" name}}' + '">' + M.str.outcome.edit + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="move" tabindex="-1" title="' + '{{title "movex" name}}' + '">' + M.str.outcome.move + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1" title="' + '{{title "deletex" name}}' + '">' + M.str.outcome.delete + '</a>' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="add" tabindex="-1" title="' + '{{title "addchildoutcome" description}}' + '">' + M.str.outcome.add + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="edit" tabindex="-1" title="' + '{{title "editx" description}}' + '">' + M.str.outcome.edit + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="move" tabindex="-1" title="' + '{{title "movex" description}}' + '">' + M.str.outcome.move + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1" title="' + '{{title "deletex" description}}' + '">' + M.str.outcome.delete + '</a>' +
             '</span>' +
             '</span>' +
             '{{#if opened}}' +
@@ -231,17 +230,20 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 var srcNode  = this.get(PANEL_MOVE).get(SRC_NODE);
 
                 // Populate label
-                srcNode.one(LABEL_FORM).set('text', M.util.get_string('movex', 'outcome', OUTCOME_MOVE.get('name')));
+                srcNode.one(LABEL_FORM).set('text', M.util.get_string('movex', 'outcome', OUTCOME_MOVE.get('description')));
                 // Reset placement drop down to 'child' option
                 srcNode.one(INPUT_PLACEMENT).set('value', 'child');
                 // Populate outcome list options - remove self and any children
                 var select = srcNode.one(INPUT_REFERENCE);
                 select.setContent('');
-                Y.Array.map(this.get(OUTCOME_LIST).filter_out_branch(OUTCOME_MOVE), function(model) {
+                Y.Array.each(this.get(OUTCOME_LIST).filter_out_branch(OUTCOME_MOVE), function(model) {
+                    if (model.get('deleted') == 1) {
+                        return; // Don't display deleted outcomes.
+                    }
                     select.appendChild(
                         Y.Node.create('<option></option>').
                         set('value', model.get('id')).
-                        setContent(this._menu_prefix(model) + Y.Escape.html(model.get('name')))
+                        setContent(this._menu_prefix(model) + Y.Escape.html(model.get('description')))
                     );
                 }, this);
 
@@ -296,15 +298,18 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 if (!outcome.isNew()) {
                     id = outcome.get('id');
                 }
+                var nullToStr = function(value) {
+                    return Lang.isNull(value) ? '' : value;
+                };
+
                 Y.one(INPUT_ID).set('value', id);
                 Y.one(INPUT_PARENTID).set('value', outcome.get('parentid'));
-                srcNode.one(INPUT_NAME).set('value', outcome.get('name'));
-                srcNode.one(INPUT_IDNUMBER).set('value', outcome.get('idnumber'));
-                srcNode.one(INPUT_DOCNUM).set('value', outcome.get('docnum'));
+                srcNode.one(INPUT_IDNUMBER).set('value', nullToStr(outcome.get('idnumber')));
+                srcNode.one(INPUT_DOCNUM).set('value', nullToStr(outcome.get('docnum')));
                 srcNode.one(INPUT_SUBJECTS).set('value', outcome.get('subjects').join(', '));
                 srcNode.one(INPUT_EDULEVELS).set('value', outcome.get('edulevels').join(', '));
                 srcNode.one(INPUT_ASSESSABLE).set('checked', outcome.get('assessable'));
-                srcNode.one(INPUT_DESCRIPTION).set('value', outcome.get('description'));
+                srcNode.one(INPUT_DESCRIPTION).set('value', nullToStr(outcome.get('description')));
 
                 this._clear_panel_errors(this.get(PANEL_EDIT));
             },
@@ -329,7 +334,6 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 }
                 var changes = {
                     parentid: Y.one(INPUT_PARENTID).get('value'),
-                    name: srcNode.one(INPUT_NAME).get('value'),
                     idnumber: srcNode.one(INPUT_IDNUMBER).get('value'),
                     docnum: srcNode.one(INPUT_DOCNUM).get('value'),
                     subjects: this._split(srcNode.one(INPUT_SUBJECTS).get('value')),
@@ -430,7 +434,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                     render: true,
                     visible: false,
                     modal: true,
-                    zIndex: 1000
+                    zIndex: 5000
                 });
 
                 // Re-display source node as we hide it initially to avoid rendering flicker

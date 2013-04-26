@@ -37,9 +37,11 @@ class outcome_model_attempt {
     public $id;
     public $outcomeusedareaid;
     public $userid;
+    public $itemid = null;
     public $percentgrade;
     public $mingrade;
     public $maxgrade;
     public $rawgrade;
+    public $timemodified;
     public $timecreated;
 }

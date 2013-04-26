@@ -3,6 +3,7 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
 
     // Shortcuts, etc
         Lang = Y.Lang,
+        IO,
         NODE_CONTENT,
         RETURN_FOCUS,
         NEW_LIST,
@@ -11,7 +12,6 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
         METADATA_MENU_CACHE = {},
         SELECTED_OUTCOMESET = undefined,
         OUTCOME_SETS_MENU = undefined,
-        URL_AJAX = M.cfg.wwwroot + '/outcome/ajax.php',
         URL_IMG_DELETE = M.util.image_url('t/delete', 'core'),
         FILTER_LIST = 'filterList',
         BOX = 'contentBox',
@@ -111,6 +111,10 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
 
     Y.extend(MAPOUTCOMESET, Y.Widget,
         {
+            initializer: function() {
+                IO = new M.core_outcome.SimpleIO({ contextId: this.get('contextId') });
+            },
+
             /**
              * Compile our templates and create
              * a node to hold our rendered HTML
@@ -294,17 +298,16 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                     this._update_panel_ui_from_cache(value);
                     return;
                 }
-                this._do_io({
+                IO.send({
                     action: 'get_outcome_set_filter_menus',
-                    outcomesetid: value,
-                    contextid: this.get('contextid')
+                    outcomesetid: value
                 }, function(data) {
                     METADATA_MENU_CACHE[value] = {
                         edulevels: data.edulevels,
                         subjects: data.subjects
                     };
                     this._update_panel_ui_from_cache(value);
-                });
+                }, this);
             },
 
             /**
@@ -346,10 +349,7 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                     callback.call(this);
                     return;
                 }
-                this._do_io({
-                    action: 'get_mappable_outcome_sets_menu',
-                    contextid: this.get('contextid')
-                }, function(data) {
+                IO.send({ action: 'get_mappable_outcome_sets_menu' }, function(data) {
                     if (!Lang.isArray(data) || data.length === 0) {
                         new M.core.alert({
                             title: M.str.moodle.error,
@@ -360,7 +360,7 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                         OUTCOME_SETS_MENU = data;
                         callback.call(this);
                     }
-                });
+                }, this);
             },
 
             /**
@@ -376,7 +376,7 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                     render: true,
                     visible: false,
                     modal: true,
-                    zIndex: 1000
+                    zIndex: 5000
                 });
 
                 panel.get(SRC_NODE).addClass(this.getClassName('panel'));
@@ -403,34 +403,6 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                 panel.get(SRC_NODE).delegate('click', this._handle_add_button, BUTTON_ADD, this);
 
                 return panel;
-            },
-
-            /**
-             * Helper method to do a AJAX request and to do error handling
-             * @param data
-             * @param callback
-             * @private
-             */
-            _do_io: function(data, callback) {
-                Y.io(URL_AJAX, {
-                    context: this,
-                    data: data,
-                    on: {
-                        complete: function(id, response) {
-                            try {
-                                var data = Y.JSON.parse(response.responseText);
-                                if (Lang.isValue(data.error)) {
-                                    new M.core.ajaxException(data);
-                                    return;
-                                }
-                            } catch (e) {
-                                new M.core.exception(e);
-                                return;
-                            }
-                            callback.call(this, data);
-                        }
-                    }
-                });
             }
         },
         {
@@ -457,9 +429,9 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
             NAME: NAME,
             ATTRS: {
                 /**
-                 * Moodle contextid - used for security checks in AJAX requests
+                 * Moodle context ID - used for security checks in AJAX requests
                  */
-                contextid: {},
+                contextId: {},
                 /**
                  * If the form is froze - if yes, then no event handlers, etc
                  */
@@ -637,5 +609,5 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
         return widget;
     };
 }, '@VERSION@', {
-    requires: ['widget', 'model', 'model-list', 'handlebars', 'panel', 'json-parse', 'json-stringify', 'moodle-core_outcome-accessiblepanel', 'moodle-core-notification']
+    requires: ['widget', 'model', 'model-list', 'handlebars', 'panel', 'json-parse', 'json-stringify', 'moodle-core_outcome-accessiblepanel', 'moodle-core-notification', 'moodle-core_outcome-simpleio']
 });

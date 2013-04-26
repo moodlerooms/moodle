@@ -65,8 +65,6 @@ function quiz_has_question_use($questionid) {
 function quiz_remove_question($quiz, $questionid) {
     global $CFG, $DB;
 
-    require_once($CFG->dirroot.'/outcome/lib.php');
-
     $questionids = explode(',', $quiz->questions);
     $key = array_search($questionid, $questionids);
     if ($key === false) {
@@ -79,9 +77,13 @@ function quiz_remove_question($quiz, $questionid) {
     $DB->delete_records('quiz_question_instances',
             array('quiz' => $quiz->instance, 'question' => $questionid));
 
-    $qtype = $DB->get_field('question', 'qtype', array('id' => $questionid), MUST_EXIST);
-    if ($outcomearea = outcome_area()->get_area('qtype_'.$qtype, 'qtype', $questionid)) {
-        outcome_area()->unset_area_used($outcomearea, $quiz->cmid);
+    if (!empty($CFG->enableoutcomes)) {
+        require_once($CFG->dirroot.'/outcome/lib.php');
+
+        $qtype = $DB->get_field('question', 'qtype', array('id' => $questionid), MUST_EXIST);
+        if ($outcomearea = outcome_area()->get_area('qtype_'.$qtype, 'qtype', $questionid)) {
+            outcome_area()->unset_area_used($outcomearea, $quiz->cmid);
+        }
     }
 }
 
@@ -122,8 +124,6 @@ function quiz_delete_empty_page($layout, $index) {
  */
 function quiz_add_quiz_question($id, $quiz, $page = 0) {
     global $CFG, $DB;
-
-    require_once($CFG->dirroot.'/outcome/lib.php');
 
     $questions = explode(',', quiz_clean_layout($quiz->questions));
     if (in_array($id, $questions)) {
@@ -183,9 +183,13 @@ function quiz_add_quiz_question($id, $quiz, $page = 0) {
     $instance->grade = $DB->get_field('question', 'defaultmark', array('id' => $id));
     $DB->insert_record('quiz_question_instances', $instance);
 
-    $qtype = $DB->get_field('question', 'qtype', array('id' => $id), MUST_EXIST);
-    if ($outcomearea = outcome_area()->get_area('qtype_'.$qtype, 'qtype', $id)) {
-        outcome_area()->set_area_used($outcomearea, $quiz->cmid);
+    if (!empty($CFG->enableoutcomes)) {
+        require_once($CFG->dirroot.'/outcome/lib.php');
+
+        $qtype = $DB->get_field('question', 'qtype', array('id' => $id), MUST_EXIST);
+        if ($outcomearea = outcome_area()->get_area('qtype_'.$qtype, 'qtype', $id)) {
+            outcome_area()->set_area_used($outcomearea, $quiz->cmid);
+        }
     }
 }
 

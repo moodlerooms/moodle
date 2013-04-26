@@ -25,12 +25,15 @@
  */
 
 define('AJAX_SCRIPT', true);
+// TODO: uncomment this after development is done define('NO_DEBUG_DISPLAY', true);
 
 /** @var $CFG stdClass */
 require_once(dirname(__DIR__).'/config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once(__DIR__.'/classes/controller/kernel.php');
-require_once(__DIR__.'/classes/controller/ajax.php');
+require_once(__DIR__.'/classes/controller/mapping_ajax.php');
+require_once(__DIR__.'/classes/controller/outcome_ajax.php');
+require_once(__DIR__.'/classes/controller/report_ajax.php');
 
 $systemcontext = context_system::instance();
 
@@ -43,9 +46,12 @@ require_login($course, false, $cm, false, true);
 
 /** @var $PAGE moodle_page */
 $PAGE->set_context($context);
+$PAGE->set_url('/outcome/ajax.php', array('action' => $action, 'contextid' => $context->id));
 
 $router = new outcome_controller_router();
-$router->add_controller(new outcome_controller_ajax());
+$router->add_controller(new outcome_controller_mapping_ajax());
+$router->add_controller(new outcome_controller_outcome_ajax());
+$router->add_controller(new outcome_controller_report_ajax());
 
 $kernel = new outcome_controller_kernel($router);
 $kernel->handle($action);

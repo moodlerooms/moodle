@@ -34,7 +34,23 @@ defined('MOODLE_INTERNAL') || die();
  * @author    Mark Nielsen
  */
 class outcome_model_mark_history {
+    /**
+     * The mark was inserted into the database.
+     */
+    const ACTION_CREATE = 1;
+
+    /**
+     * The mark was updated in the database.
+     */
+    const ACTION_UPDATE = 2;
+
+    /**
+     * The mark was deleted from the database.
+     */
+    const ACTION_DELETE = 3;
+
     public $id;
+    public $action;
     public $outcomemarkid;
     public $courseid;
     public $outcomeid;

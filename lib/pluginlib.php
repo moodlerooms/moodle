@@ -729,6 +729,10 @@ class plugin_manager {
                 'rubric', 'guide'
             ),
 
+            'ltisource' => array(
+                'lti'
+            ),
+
             'local' => array(
             ),
 

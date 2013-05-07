@@ -188,7 +188,6 @@ $string['force_ssl_help'] = 'Selecting this option forces all launches to this t
 In addition, all web service requests from the tool provider will use SSL.
 
 If using this option, confirm that this Moodle site and the tool provider support SSL.';
-$string['generaltool'] = 'General tool';
 $string['global_tool_types'] = 'Global tool types';
 $string['grading'] = 'Grade Routing';
 $string['icon_url'] = 'Icon URL';
@@ -257,7 +256,7 @@ $string['misconfiguredtools'] = 'Misconfigured tool instances were detected';
 $string['missingparameterserror'] = 'The page is misconfigured: "{$a}"';
 $string['module_class_type'] = 'Moodle module type';
 $string['modulename'] = 'External Tool';
-$string['modulename_help'] = 'The external tool activity module enables students to interact with learning resources and activities on other web sites. For example, an external tool could provide access to a new activity type or learning materials from a publisher.
+$string['helplti'] = 'The external tool activity module enables students to interact with learning resources and activities on other web sites. For example, an external tool could provide access to a new activity type or learning materials from a publisher.
 
 To create an external tool activity, a tool provider which supports LTI (Learning Tools Interoperability) is required. A teacher can create an external tool activity or make use of a tool configured by the site administrator.
 

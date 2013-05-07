@@ -165,6 +165,7 @@ function lti_delete_instance($id) {
 
 function lti_get_types() {
     $types = array();
+    $subplugins = get_plugin_list('ltisource');
 
     $type = new stdClass();
     $type->modclass = MOD_CLASS_ACTIVITY;
@@ -172,13 +173,7 @@ function lti_get_types() {
     $type->typestr = '--'.get_string('modulenameplural', 'mod_lti');
     $types[] = $type;
 
-    $type = new stdClass();
-    $type->modclass = MOD_CLASS_ACTIVITY;
-    $type->type = 'lti';
-    $type->typestr = get_string('generaltool', 'mod_lti');
-    $types[] = $type;
-
-    foreach (get_plugin_list('ltisource') as $name => $dir) {
+    foreach ($subplugins as $name => $dir) {
         if ($moretypes = component_callback("ltisource_$name", 'get_types')) {
             $types = array_merge($types, $moretypes);
         }

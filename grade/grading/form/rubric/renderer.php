@@ -88,6 +88,7 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN) {
                 $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][sortorder]', 'value' => $criterion['sortorder']));
                 $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][description]', 'value' => $criterion['description']));
+                $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][outcomeid]', 'value' => (isset($criterion['outcomeid'])) ? $criterion['outcomeid'] : '0'));
             }
             $description = $criterion['description'];
         }

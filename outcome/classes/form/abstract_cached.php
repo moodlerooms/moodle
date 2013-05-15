@@ -71,7 +71,7 @@ abstract class outcome_form_abstract_cached extends moodleform {
      */
     function _process_submission($method) {
         $this->init_cache();
-        $this->set_data(array_merge($this->_form->exportValues(), $this->get_cached_data()));
+        $this->set_data(array_merge($this->_form->_defaultValues, $this->_form->exportValues(), $this->get_cached_data()));
 
         parent::_process_submission($method);
     }

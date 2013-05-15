@@ -8052,6 +8052,8 @@ function get_plugin_types($fullpaths=true) {
                       'cachelock'     => 'cache/locks',
                       'theme'         => 'theme',  // this is a bit hacky, themes may be in $CFG->themedir too
                       'outcomesupport' => 'outcome/support',
+                      'outcomeimport' => 'outcome/import',
+                      'outcomeexport' => 'outcome/export',
         );
 
         $subpluginowners = array_merge(array_values(get_plugin_list('mod')),

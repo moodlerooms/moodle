@@ -80,6 +80,9 @@ class outcome_controller_report extends outcome_controller_abstract {
 
         add_to_log($COURSE->id, 'outcome', 'view course outcome sets', 'course.php?contextid='.$PAGE->context->id);
 
+        $PAGE->set_title(get_string('outcomesetsforx', 'outcome', format_string($COURSE->fullname)));
+        $PAGE->navbar->add(get_string('outcomesets', 'outcome'));
+
         $table = new outcome_table_course_outcome_sets();
         $table->define_baseurl($this->new_url());
 
@@ -98,6 +101,9 @@ class outcome_controller_report extends outcome_controller_abstract {
         $outcomesetid = optional_param('forceoutcomesetid', 0, PARAM_INT);
 
         add_to_log($COURSE->id, 'outcome', 'view outcome marking', 'course.php?contextid='.$PAGE->context->id);
+
+        $PAGE->set_title(get_string('completionmarkingforx', 'outcome', format_string($COURSE->fullname)));
+        $PAGE->navbar->add(get_string('report:marking', 'outcome'));
 
         $mform = new outcome_form_marking_filter($this->new_url());
         $table = new outcome_table_marking($mform);

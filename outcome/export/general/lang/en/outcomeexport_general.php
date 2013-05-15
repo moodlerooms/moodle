@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Set Model
+ * Language definitions
  *
  * @package   core_outcome
  * @category  outcome
@@ -26,22 +26,4 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * @package   core_outcome
- * @category  outcome
- * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @author    Mark Nielsen
- */
-class outcome_model_outcome_set {
-    public $id;
-    public $idnumber;
-    public $name;
-    public $description = null;
-    public $provider = null;
-    public $revision = null;
-    public $region = null;
-    public $deleted = 0;
-    public $timemodified;
-    public $timecreated;
-}
+$string['pluginname'] = 'General Moodle Export Format';

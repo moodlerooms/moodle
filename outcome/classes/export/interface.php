@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Set Model
+ * Outcome Set Export Interface
  *
  * @package   core_outcome
  * @category  outcome
@@ -33,15 +33,21 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_model_outcome_set {
-    public $id;
-    public $idnumber;
-    public $name;
-    public $description = null;
-    public $provider = null;
-    public $revision = null;
-    public $region = null;
-    public $deleted = 0;
-    public $timemodified;
-    public $timecreated;
+interface outcome_export_interface {
+    /**
+     * Get the extension of the file format that is created
+     * by this exporter.  EG: if you generate a XML file,
+     * then this should return a 'xml' string.
+     *
+     * @return string
+     */
+    public function get_extension();
+
+    /**
+     * @param string $file The file to write the export to
+     * @param outcome_model_outcome_set $outcomeset
+     * @param outcome_model_outcome[] $outcomes
+     * @return string The file created from the export
+     */
+    public function export($file, outcome_model_outcome_set $outcomeset, array $outcomes);
 }

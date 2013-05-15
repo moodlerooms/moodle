@@ -29,6 +29,8 @@ require_once(dirname(__DIR__).'/config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once(__DIR__.'/classes/controller/kernel.php');
 require_once(__DIR__.'/classes/controller/outcome_set.php');
+require_once(__DIR__.'/classes/controller/import.php');
+require_once(__DIR__.'/classes/controller/export.php');
 
 $action = required_param('action', PARAM_ALPHAEXT);
 
@@ -36,6 +38,8 @@ admin_externalpage_setup('core_outcomes');
 
 $router = new outcome_controller_router();
 $router->add_controller(new outcome_controller_outcome_set());
+$router->add_controller(new outcome_controller_import());
+$router->add_controller(new outcome_controller_export());
 
 $kernel = new outcome_controller_kernel($router);
 $kernel->handle($action);

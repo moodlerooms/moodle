@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Support Factory
+ * Outcome Factory
  *
  * @package   core_outcome
  * @category  outcome
@@ -26,8 +26,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(__DIR__.'/area/info_unknown.php');
-
 /**
  * @package   core_outcome
  * @category  outcome
@@ -35,32 +33,52 @@ require_once(__DIR__.'/area/info_unknown.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_support_factory {
+class outcome_factory {
     /**
      * Finds a class inside of a file that lives in a component.
      *
      * @param string $component The component to find the class file in
      * @param string $filename The file name inside of the component, it should contain our class
      * @param string $suffix This is appended to the component name, together make the class name we want
-     * @return bool|string
+     * @param bool $required Require that the class file exists
      * @throws coding_exception
+     * @return bool|string
      */
-    protected function build_class_name($component, $filename, $suffix) {
+    protected function build_class_name($component, $filename, $suffix, $required = true) {
         $directory = get_component_directory($component);
         if (empty($directory)) {
             return false;
         }
         $file = $directory.'/'.$filename;
         if (!file_exists($file)) {
+            if ($required) {
+                throw new coding_exception("Failed to find $filename in $component");
+            }
             return false;
         }
         require_once($file);
 
         $classname = $component.'_'.$suffix;
         if (!class_exists($classname)) {
-            throw new coding_exception("Expected to find $classname");
+            throw new coding_exception("Expected to find $classname in $filename in $component");
         }
         return $classname;
+    }
+
+    /**
+     * @param string $class Create a new instance of this class
+     * @param null|string $parent Ensure that this is the parent class
+     * @return mixed
+     * @throws coding_exception
+     */
+    protected function build_generic_instance($class, $parent = null) {
+        if (!is_null($parent)) {
+            $reflection = new ReflectionClass($class);
+            if (!$reflection->isSubclassOf($parent)) {
+                throw new coding_exception("The $class must be a subclass of $parent");
+            }
+        }
+        return new $class();
     }
 
     /**
@@ -72,21 +90,51 @@ class outcome_support_factory {
      * @return outcome_area_info_interface
      */
     public function build_area_info(outcome_model_area $model, cm_info $cm) {
+        require_once(__DIR__.'/area/info_unknown.php');
+
         $normalized = normalize_component($model->component);
-        $classname  = $this->build_class_name('outcomesupport_'.$normalized[0], 'area_info.php', 'area_info');
+        $classname  = $this->build_class_name('outcomesupport_'.$normalized[0], 'area_info.php', 'area_info', false);
 
         if (empty($classname)) {
             $areainfo = new outcome_area_info_unknown();
         } else {
-            $areainfo = new $classname();
-
-            if (!$areainfo instanceof outcome_area_info_interface) {
-                throw new coding_exception("The $classname must implement outcome_area_info_interface");
-            }
+            $areainfo = $this->build_generic_instance($classname, 'outcome_area_info_interface');
         }
         $areainfo->set_area($model);
         $areainfo->set_cm($cm);
 
         return $areainfo;
+    }
+
+    /**
+     * Build an outcome import instance.
+     *
+     * @param string $component A outcome import component name
+     * @return outcome_import_interface
+     * @throws coding_exception
+     */
+    public function build_importer($component) {
+        require_once(__DIR__.'/import/interface.php');
+
+        return $this->build_generic_instance(
+            $this->build_class_name($component, 'import.php', 'import'),
+            'outcome_import_interface'
+        );
+    }
+
+    /**
+     * Build an outcome export instance.
+     *
+     * @param string $component A outcome export component name
+     * @return outcome_export_interface
+     * @throws coding_exception
+     */
+    public function build_exporter($component) {
+        require_once(__DIR__.'/export/interface.php');
+
+        return $this->build_generic_instance(
+            $this->build_class_name($component, 'export.php', 'export'),
+            'outcome_export_interface'
+        );
     }
 }

@@ -102,9 +102,12 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
      * Editing an outcome set
      */
     public function outcomeset_edit_action() {
-        global $COURSE;
+        global $PAGE, $COURSE;
 
         require_once(dirname(__DIR__).'/form/outcome_set.php');
+
+        $PAGE->set_title(get_string('editingoutcomeset', 'outcome'));
+        $PAGE->navbar->add(get_string('editingoutcomeset', 'outcome'));
 
         $outcomesetid = optional_param('outcomesetid', 0, PARAM_INT);
 

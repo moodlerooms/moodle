@@ -104,6 +104,7 @@ class outcome_table_manage_outcome_sets extends table_sql {
         $actions = array();
         $actions[] = $this->_edit_link($row->name, $row->id, get_string('edit', 'outcome'));
         $actions[] = $this->_delete_link($row->name, $row->id);
+        $actions[] = $this->_export_link($row->name, $row->id);
 
         return implode('&nbsp;', $actions);
     }
@@ -143,5 +144,21 @@ class outcome_table_manage_outcome_sets extends table_sql {
         }
         return html_writer::link($url, $title,
             array('title' => get_string('editx', 'outcome', $name)));
+    }
+
+    protected function _export_link($name, $id, $title = null) {
+        /** @var $url moodle_url */
+        $url = clone($this->baseurl);
+        $url->params(array(
+            'action'       => 'outcomeset_export',
+            'outcomesetid' => $id,
+        ));
+
+        $name = format_string($name);
+        if (is_null($title)) {
+            $title = get_string('export', 'outcome');
+        }
+        return html_writer::link($url, $title,
+            array('title' => get_string('exportx', 'outcome', $name)));
     }
 }

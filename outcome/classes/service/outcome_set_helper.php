@@ -42,6 +42,13 @@ class outcome_service_outcome_set_helper {
     protected $outcomesets;
 
     /**
+     * These are option text fields in the outcome set model
+     *
+     * @var array
+     */
+    protected $optional = array('description', 'provider', 'revision', 'region');
+
+    /**
      * @param outcome_model_outcome_set_repository $outcomesets
      */
     public function __construct(outcome_model_outcome_set_repository $outcomesets = null) {
@@ -53,18 +60,69 @@ class outcome_service_outcome_set_helper {
     }
 
     /**
-     * Save outcome set form data.  Data should already be validated!
+     * Save outcome set form data.
      *
      * @param outcome_model_outcome_set $model
      * @param object $data
      */
     public function save_outcome_set_form_data(outcome_model_outcome_set $model, $data) {
-        $model->name        = trim($data->name);
-        $model->idnumber    = trim($data->idnumber);
+        $model->name        = $data->name;
+        $model->idnumber    = $data->idnumber;
         $model->description = $data->description;
-        $model->provider    = trim($data->provider);
-        $model->region      = trim($data->region);
+        $model->provider    = $data->provider;
+        $model->region      = $data->region;
 
+        $this->save_outcome_set($model);
+    }
+
+    /**
+     * Clean and validate an outcome set model.
+     *
+     * @param outcome_model_outcome_set $model
+     * @throws coding_exception
+     */
+    public function clean_and_validate(outcome_model_outcome_set $model) {
+        if (!empty($model->id)) {
+            $model->id = clean_param($model->id, PARAM_INT);
+        }
+        if (!empty($model->timemodified)) {
+            $model->timemodified = clean_param($model->timemodified, PARAM_INT);
+        }
+        if (!empty($model->timecreated)) {
+            $model->timecreated = clean_param($model->timecreated, PARAM_INT);
+        }
+        $model->idnumber = trim(clean_param($model->idnumber, PARAM_TEXT));
+        $model->name     = trim(clean_param($model->name, PARAM_TEXT));
+        $model->deleted  = clean_param($model->deleted, PARAM_BOOL);
+
+        foreach ($this->optional as $property) {
+            $model->$property = trim(clean_param($model->$property, PARAM_TEXT));
+
+            if ($model->$property === '') {
+                $model->$property = null;
+            }
+        }
+        if ($model->name === '') {
+            throw new coding_exception('Outcome set name is required');
+        }
+        if ($model->idnumber === '') {
+            throw new coding_exception('Outcome idnumber property is required');
+        }
+        if (!$this->outcomesets->is_idnumber_unique($model->idnumber, $model->id)) {
+            throw new moodle_exception('outcomesetidnumbererror', 'outcome', '', array(
+                'idnumber' => format_string($model->idnumber),
+                'name'     => format_string(($model->name))
+            ));
+        }
+    }
+
+    /**
+     * Clean, validate and save an outcome set model
+     *
+     * @param outcome_model_outcome_set $model
+     */
+    public function save_outcome_set(outcome_model_outcome_set $model) {
+        $this->clean_and_validate($model);
         $this->outcomesets->save($model);
     }
 }

@@ -24,6 +24,10 @@
  * @author    Mark Nielsen
  */
 
+$string['outcomesetsforx'] = 'Outcome sets for {$a}';
+$string['outcomesets'] = 'Outcome sets';
+$string['completionmarkingforx'] = 'Completion marking for {$a}';
+$string['editingoutcomeset'] = 'Editing outcome set';
 $string['fullname'] = 'Full name';
 $string['mappedcourses'] = 'Mapped courses';
 $string['editdeleteexport'] = 'Edit/Delete/Export';
@@ -114,3 +118,14 @@ $string['scalevalue'] = 'Scale value';
 $string['unknown'] = '<em>Unknown</em>';
 $string['content'] = 'Content';
 $string['pointvalue'] = 'Point value';
+$string['importoutcomeset'] = 'Import Outcome Set';
+$string['importformat'] = 'Import format';
+$string['importfile'] = 'Import file';
+$string['fileuploadfailed'] = 'The file failed to upload, please try again.';
+$string['importcomplete'] = 'Successfully imported <em>{$a}</em> outcome set.';
+$string['export'] = 'Export';
+$string['exportx'] = 'Export {$a}';
+$string['outcomeidnumbererror'] = 'Outcome cannot be created because the Unique ID of <em>{$a}</em> is already in use by another outcome.  Please use a different Unique ID and try again.';
+$string['outcomesetidnumbererror'] = 'Outcome set <em>{$a->name}</em> cannot be created because the Unique ID of <em>{$a->idnumber}</em> is already in use by another outcome set.  Please use a different Unique ID and try again.';
+$string['nogradebookusers'] = 'This report cannot be run because there are no gradable users enrolled in the course.';
+$string['nothingimported'] = 'Nothing was imported, perhaps the wrong import format was selected.  Please verify the file contents, file format and try again.';

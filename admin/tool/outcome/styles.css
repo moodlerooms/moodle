@@ -6,6 +6,11 @@ tr.outcome-activity-content-attempt .c0 {
     padding-left: 20px;
 }
 
+.outcome-set-actions a {
+    display: inline-block;
+    margin-right: 10px;
+}
+
 .outcome-marking-submit {
     text-align: right;
     margin-top: 10px;

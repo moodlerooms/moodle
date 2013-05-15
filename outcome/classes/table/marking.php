@@ -114,8 +114,8 @@ class outcome_table_marking extends table_sql {
          LEFT OUTER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
          LEFT OUTER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
          LEFT OUTER JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
-         LEFT OUTER JOIN {outcome_attempts} a ON used.id = a.outcomeusedareaid AND a.userid = :attemptuserid
          LEFT OUTER JOIN (
+                          {outcome_attempts} a INNER JOIN (
                             SELECT outcomeusedareaid, userid, MAX(timemodified) timemodified
                               FROM {outcome_attempts}
                           GROUP BY outcomeusedareaid, userid
@@ -123,6 +123,7 @@ class outcome_table_marking extends table_sql {
                          ) latest ON a.outcomeusedareaid = latest.outcomeusedareaid
                                  AND a.userid = latest.userid
                                  AND a.timemodified = latest.timemodified
+                         ) ON used.id = a.outcomeusedareaid AND a.userid = :attemptuserid
          LEFT OUTER JOIN {course_modules} cmscale ON cmscale.id = used.cmid
          LEFT OUTER JOIN {modules} mods ON mods.id = cmscale.module
          LEFT OUTER JOIN {grade_items} gi ON gi.itemtype = :itemtype AND gi.iteminstance = cmscale.instance

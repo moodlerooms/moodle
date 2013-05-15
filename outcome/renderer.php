@@ -88,7 +88,16 @@ class core_outcome_renderer extends plugin_renderer_base {
         $editurl = $PAGE->url;
         $editurl->param('action', 'outcomeset_edit');
 
+        echo html_writer::start_tag('div', array('class' => 'outcome-set-actions'));
         echo html_writer::link($editurl, get_string('addnewoutcomeset', 'outcome'));
+
+        if (has_capability('moodle/outcome:import', $PAGE->context)) {
+            $importurl = $PAGE->url;
+            $importurl->param('action', 'outcomeset_import');
+
+            echo html_writer::link($importurl, get_string('importoutcomeset', 'outcome'));
+        }
+        echo html_writer::end_tag('div');
 
         $table->out(50, false);
     }

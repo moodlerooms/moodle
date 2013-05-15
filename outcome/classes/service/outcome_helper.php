@@ -81,8 +81,12 @@ class outcome_service_outcome_helper {
             } else {
                 $outcome = new outcome_model_outcome();
             }
+            // Remove ID, no longer required and if negative, breaks saves.
+            unset($rawoutcome->id);
+
             $outcome->outcomesetid = $outcomeset->id;
-            $this->map_raw_outcome($outcome, $rawoutcome);
+            $this->map_to_outcome($outcome, $rawoutcome);
+            $this->clean_and_validate($outcome);
             $this->resolve_parent_id($outcome, $newidmap);
 
             $this->outcomes->save($outcome);
@@ -98,7 +102,7 @@ class outcome_service_outcome_helper {
      * @param object $data
      * @return bool|array
      */
-    public function extract_raw_outcomes($data) {
+    protected function extract_raw_outcomes($data) {
         if (!empty($data->modifiedoutcomedata)) {
             return json_decode($data->modifiedoutcomedata);
         }
@@ -106,25 +110,16 @@ class outcome_service_outcome_helper {
     }
 
     /**
-     * Clean raw form data and assign it to the model
+     * Map data to an outcome model
      *
      * @param outcome_model_outcome $model
-     * @param $rawoutcome
+     * @param array|object $data
      */
-    public function map_raw_outcome(outcome_model_outcome $model, $rawoutcome) {
-        $model->parentid    = clean_param($rawoutcome->parentid, PARAM_INT);
-        $model->idnumber    = clean_param($rawoutcome->idnumber, PARAM_TEXT);
-        $model->docnum      = clean_param($rawoutcome->docnum, PARAM_TEXT);
-        $model->assessable  = clean_param($rawoutcome->assessable, PARAM_BOOL);
-        $model->deleted     = clean_param($rawoutcome->deleted, PARAM_BOOL);
-        $model->description = clean_param($rawoutcome->description, PARAM_TEXT);
-        $model->subjects    = clean_param_array($rawoutcome->subjects, PARAM_TEXT);
-        $model->edulevels   = clean_param_array($rawoutcome->edulevels, PARAM_TEXT);
-        $model->sortorder   = clean_param($rawoutcome->sortorder, PARAM_INT);
-
-        // Due to cleaning, nulls get converted to zeros.  Restore null if necessary.
-        if ($model->parentid == 0) {
-            $model->parentid = null;
+    public function map_to_outcome(outcome_model_outcome $model, $data) {
+        foreach ($data as $name => $value) {
+            if (property_exists($model, $name)) {
+                $model->$name = $value;
+            }
         }
     }
 
@@ -136,7 +131,7 @@ class outcome_service_outcome_helper {
      * @param array $newidmap
      * @throws moodle_exception
      */
-    public function resolve_parent_id(outcome_model_outcome $model, array $newidmap) {
+    protected function resolve_parent_id(outcome_model_outcome $model, array $newidmap) {
         if ($model->parentid < 0) {
             if (array_key_exists($model->parentid, $newidmap)) {
                 $model->parentid = $newidmap[$model->parentid];
@@ -144,6 +139,69 @@ class outcome_service_outcome_helper {
                 throw new moodle_exception('failedtosavereasonparent', 'outcome', '', format_string($model->description));
             }
         }
+    }
+
+    /**
+     * Clean and validate an outcome model.
+     *
+     * @param outcome_model_outcome $model
+     * @throws moodle_exception
+     * @throws coding_exception
+     */
+    public function clean_and_validate(outcome_model_outcome $model) {
+        if (!empty($model->id)) {
+            $model->id = clean_param($model->id, PARAM_INT);
+        }
+        if (!empty($model->timemodified)) {
+            $model->timemodified = clean_param($model->timemodified, PARAM_INT);
+        }
+        if (!empty($model->timecreated)) {
+            $model->timecreated = clean_param($model->timecreated, PARAM_INT);
+        }
+        $model->outcomesetid = clean_param($model->outcomesetid, PARAM_INT);
+        $model->parentid     = clean_param($model->parentid, PARAM_INT);
+        $model->idnumber     = trim(clean_param($model->idnumber, PARAM_TEXT));
+        $model->docnum       = trim(clean_param($model->docnum, PARAM_TEXT));
+        $model->assessable   = clean_param($model->assessable, PARAM_BOOL);
+        $model->deleted      = clean_param($model->deleted, PARAM_BOOL);
+        $model->description  = trim(clean_param($model->description, PARAM_TEXT));
+        $model->subjects     = clean_param_array($model->subjects, PARAM_TEXT);
+        $model->edulevels    = clean_param_array($model->edulevels, PARAM_TEXT);
+        $model->sortorder    = clean_param($model->sortorder, PARAM_INT);
+
+        $model->subjects  = array_map('trim', $model->subjects);
+        $model->edulevels = array_map('trim', $model->edulevels);
+
+        if ($model->description === '') {
+            throw new coding_exception('Outcome description property is required');
+        }
+        if (empty($model->outcomesetid)) {
+            throw new coding_exception('Outcome outcomesetid property is required');
+        }
+        if ($model->idnumber === '') {
+            throw new coding_exception('Outcome idnumber property is required');
+        }
+        if (!$this->outcomes->is_idnumber_unique($model->idnumber, $model->id)) {
+            throw new moodle_exception('outcomeidnumbererror', 'outcome', '', format_string($model->idnumber));
+        }
+
+        // Due to cleaning, nulls get converted to zeros or empty strings.  Restore nulls if necessary.
+        if ($model->parentid == 0) {
+            $model->parentid = null;
+        }
+        if ($model->docnum === '') {
+            $model->docnum = null;
+        }
+    }
+
+    /**
+     * Clean, validate and save an outcome model
+     *
+     * @param outcome_model_outcome $model
+     */
+    public function save_outcome(outcome_model_outcome $model) {
+        $this->clean_and_validate($model);
+        $this->outcomes->save($model);
     }
 
     /**

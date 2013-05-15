@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Set Model
+ * Outcome Set Export Controller
  *
  * @package   core_outcome
  * @category  outcome
@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__.'/abstract.php');
+
 /**
  * @package   core_outcome
  * @category  outcome
@@ -33,15 +35,42 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_model_outcome_set {
-    public $id;
-    public $idnumber;
-    public $name;
-    public $description = null;
-    public $provider = null;
-    public $revision = null;
-    public $region = null;
-    public $deleted = 0;
-    public $timemodified;
-    public $timecreated;
+class outcome_controller_export extends outcome_controller_abstract {
+    /**
+     * @var outcome_service_export_helper
+     */
+    public $exporthelper;
+
+    /**
+     * Do any security checks needed for the passed action
+     *
+     * @abstract
+     * @param string $action
+     */
+    public function require_capability($action) {
+        global $PAGE;
+
+        require_capability('moodle/outcome:export', $PAGE->context);
+    }
+
+    public function init($action) {
+        parent::init($action);
+
+        require_once(dirname(__DIR__).'/service/export_helper.php');
+
+        $this->exporthelper = new outcome_service_export_helper();
+    }
+
+    /**
+     * Export an outcome set
+     */
+    public function outcomeset_export_action() {
+        $outcomesetid = required_param('outcomesetid', PARAM_INT);
+        $component    = optional_param('component', 'outcomeexport_general', PARAM_COMPONENT);
+
+        list($path, $filename) = $this->exporthelper->export_outcome_set_by_id($component, $outcomesetid);
+        $this->exporthelper->send_export_file($path, $filename);
+
+        die;
+    }
 }

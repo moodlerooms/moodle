@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Set Model
+ * Outcome Set Import Interface
  *
  * @package   core_outcome
  * @category  outcome
@@ -33,15 +33,23 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_model_outcome_set {
-    public $id;
-    public $idnumber;
-    public $name;
-    public $description = null;
-    public $provider = null;
-    public $revision = null;
-    public $region = null;
-    public $deleted = 0;
-    public $timemodified;
-    public $timecreated;
+interface outcome_import_interface {
+    /**
+     * Import the outcome set found in the passed file.
+     *
+     * @param string $file Absolute path to the file that should be imported
+     * @return void
+     */
+    public function process_file($file);
+
+    /**
+     * Return null if nothing happened.
+     * Return instance of outcome_model_outcome_set if
+     * an outcome set was created.
+     *
+     * Otherwise, throw exceptions as needed for errors.
+     *
+     * @return null|outcome_model_outcome_set
+     */
+    public function get_result();
 }

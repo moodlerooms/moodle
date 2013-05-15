@@ -83,12 +83,8 @@ abstract class outcome_form_abstract_filter extends outcome_form_abstract_cached
      * @todo Add a next button
      */
     public function define_course_users() {
-        global $PAGE;
-
-        $users = get_enrolled_users($PAGE->context, '', 0, 'u.id, u.firstname, u.lastname');
-
         $options = array();
-        foreach ($users as $user) {
+        foreach ($this->get_gradebook_users() as $user) {
             $options[$user->id] = fullname($user);
         }
         collatorlib::asort($options);
@@ -98,5 +94,41 @@ abstract class outcome_form_abstract_filter extends outcome_form_abstract_cached
         $mform->addElement('select', 'userid', get_string('user', 'outcome'), $options);
         $mform->setDefault('userid', key($options));
         $mform->setType('userid', PARAM_INT);
+    }
+
+    /**
+     * Get gradebook users - throws exception if none are found.
+     *
+     * @return array
+     * @throws moodle_exception
+     */
+    protected function get_gradebook_users() {
+        global $CFG, $DB, $PAGE;
+
+        // Ensure we have course context.
+        $context = context_course::instance($PAGE->course->id);
+
+        list($esql, $eparams) = get_enrolled_sql($context);
+        list($gsql, $rparams) = $DB->get_in_or_equal(explode(',', $CFG->gradebookroles), SQL_PARAMS_NAMED, 'grbr');
+        list($csql, $cparams) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'ctx');
+
+        $users = $DB->get_records_sql("
+            SELECT u.id, u.firstname, u.lastname
+              FROM {user} u
+        INNER JOIN ($esql) e ON e.id = u.id
+        INNER JOIN (
+                     SELECT DISTINCT ra.userid
+                       FROM {role_assignments} ra
+                      WHERE ra.roleid $gsql
+                        AND ra.contextid $csql
+                   ) ra ON ra.userid = u.id
+             WHERE u.deleted = 0
+          ORDER BY u.firstname, u.lastname
+        ", array_merge($eparams, $rparams, $cparams));
+
+        if (empty($users)) {
+            throw new moodle_exception('nogradebookusers', 'outcome', $CFG->wwwroot.'/course/view.php?id='.$PAGE->course->id);
+        }
+        return $users;
     }
 }

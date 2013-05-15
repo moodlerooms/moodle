@@ -26,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(__DIR__).'/support_factory.php');
+require_once(dirname(__DIR__).'/factory.php');
 require_once(dirname(__DIR__).'/model/area.php');
 require_once(dirname(__DIR__).'/model/attempt.php');
 
@@ -44,19 +44,19 @@ class outcome_service_report_helper {
     protected $db;
 
     /**
-     * @var outcome_support_factory
+     * @var outcome_factory
      */
     protected $factory;
 
     /**
-     * @param outcome_support_factory $factory
+     * @param outcome_factory $factory
      * @param moodle_database $db
      */
-    public function __construct(outcome_support_factory $factory = null, moodle_database $db = null) {
+    public function __construct(outcome_factory $factory = null, moodle_database $db = null) {
         global $DB;
 
         if (is_null($factory)) {
-            $factory = new outcome_support_factory();
+            $factory = new outcome_factory();
         }
         if (is_null($db)) {
             $db = $DB;

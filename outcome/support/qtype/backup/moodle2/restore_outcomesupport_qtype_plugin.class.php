@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,29 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Defines restore_gradingform_plugin class
- * @package     core_backup
- * @subpackage  moodle2
- * @category    backup
- * @copyright   2011 David Mudrak <david@moodle.com>
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Restore question outcome mappings
+ *
+ * @package   core_outcome
+ * @category  outcome
+ * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @author    Mark Nielsen
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Base class for all advanced grading form plugins
+ * @package   core_outcome
+ * @category  outcome
+ * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @author    Mark Nielsen
  */
-abstract class restore_gradingform_plugin extends restore_outcome_area_plugin {
-
-    /**
-     * Helper method returning the mapping identifierto use for
-     * grading form instance's itemid field
-     *
-     * @param array $areaname the name of the area the form is defined for
-     * @return string the mapping identifier
-     */
-    public static function itemid_mapping($areaname) {
-        return 'grading_item_'.$areaname;
+class restore_outcomesupport_qtype_plugin extends restore_outcome_area_plugin {
+    public function define_question_plugin_structure() {
+        return $this->define_outcome_area_structure('question');
     }
 }

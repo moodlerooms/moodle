@@ -30,5 +30,5 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Base class for all advanced grading form plugins
  */
-abstract class backup_gradingform_plugin extends backup_plugin {
+abstract class backup_gradingform_plugin extends backup_outcome_area_plugin {
 }

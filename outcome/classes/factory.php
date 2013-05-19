@@ -107,6 +107,19 @@ class outcome_factory {
     }
 
     /**
+     * Build an outcome backup instance.
+     *
+     * @param string $component A outcome support component name
+     * @return mixed
+     * @throws coding_exception
+     */
+    public function build_backup($component) {
+        return $this->build_generic_instance(
+            $this->build_class_name($component, 'backup.php', 'backup')
+        );
+    }
+
+    /**
      * Build an outcome import instance.
      *
      * @param string $component A outcome import component name

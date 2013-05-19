@@ -82,4 +82,9 @@ class outcome_service_factory {
         require_once(__DIR__."/attempt.php");
         return new outcome_service_attempt();
     }
+
+    protected static function build_backup() {
+        require_once(__DIR__."/backup.php");
+        return new outcome_service_backup();
+    }
 }

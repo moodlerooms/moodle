@@ -59,3 +59,14 @@ function outcome_area() {
 function outcome_attempt() {
     return outcome_service_factory::build('attempt');
 }
+
+/**
+ * This service helps with backing up and restoring
+ * the outcome system.
+ *
+ * @return outcome_service_backup
+ * @see outcome_service_backup
+ */
+function outcome_backup() {
+    return outcome_service_factory::build('backup');
+}

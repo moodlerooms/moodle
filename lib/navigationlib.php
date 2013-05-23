@@ -3562,7 +3562,7 @@ class settings_navigation extends navigation_node {
         }
 
         //  Add outcome if permitted
-        if (!empty($CFG->enableoutcomes) && has_capability('moodle/grade:edit', $coursecontext)) {
+        if (!empty($CFG->core_outcome_enable) && has_capability('moodle/grade:edit', $coursecontext)) {
             $url = new moodle_url('/outcome/course.php', array('contextid' => $coursecontext->id));
             $coursenode->add(get_string('outcomes', 'outcome'), $url, self::TYPE_SETTING, null, 'outcome', new pix_icon('i/outcomes', ''));
         }

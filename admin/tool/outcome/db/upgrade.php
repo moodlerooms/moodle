@@ -1,7 +1,7 @@
 <?php
 
 function xmldb_tool_outcome_upgrade($oldversion) {
-    global $DB;
+    global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
@@ -115,6 +115,19 @@ function xmldb_tool_outcome_upgrade($oldversion) {
 
         // outcome savepoint reached
         upgrade_plugin_savepoint(true, 2013031812, 'tool', 'outcome');
+    }
+
+    if ($oldversion < 2013031813) {
+
+        if (!empty($CFG->enableoutcomes)) {
+            set_config('enable', 1, 'core_outcome');
+        } else {
+            set_config('enable', 0, 'core_outcome');
+        }
+        set_config('core_outcome_enable', 0);
+
+        // outcome savepoint reached
+        upgrade_plugin_savepoint(true, 2013031813, 'tool', 'outcome');
     }
 
     return true;

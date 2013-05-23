@@ -77,7 +77,7 @@ function quiz_remove_question($quiz, $questionid) {
     $DB->delete_records('quiz_question_instances',
             array('quiz' => $quiz->instance, 'question' => $questionid));
 
-    if (!empty($CFG->enableoutcomes)) {
+    if (!empty($CFG->core_outcome_enable)) {
         require_once($CFG->dirroot.'/outcome/lib.php');
 
         $qtype = $DB->get_field('question', 'qtype', array('id' => $questionid), MUST_EXIST);
@@ -183,7 +183,7 @@ function quiz_add_quiz_question($id, $quiz, $page = 0) {
     $instance->grade = $DB->get_field('question', 'defaultmark', array('id' => $id));
     $DB->insert_record('quiz_question_instances', $instance);
 
-    if (!empty($CFG->enableoutcomes)) {
+    if (!empty($CFG->core_outcome_enable)) {
         require_once($CFG->dirroot.'/outcome/lib.php');
 
         $qtype = $DB->get_field('question', 'qtype', array('id' => $id), MUST_EXIST);

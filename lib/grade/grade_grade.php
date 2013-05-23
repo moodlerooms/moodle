@@ -788,7 +788,7 @@ class grade_grade extends grade_object {
         }
 
         // Sync the grade to outcome attempts if necessary
-        if (!empty($CFG->enableoutcomes)) {
+        if (!empty($CFG->core_outcome_enable)) {
             require_once($CFG->dirroot.'/outcome/lib.php');
             outcome_attempt()->sync_mod_attempt_with_grade($this, $deleted);
         }

@@ -403,7 +403,7 @@ abstract class moodleform_mod extends moodleform {
         global $COURSE, $CFG, $DB;
         $mform =& $this->_form;
 
-        if (!empty($CFG->enableoutcomes)) {
+        if (!empty($CFG->core_outcome_enable)) {
             $mform->addElement('header', 'outcomesheader', get_string('outcomes', 'outcome'));
             $mform->addElement('mapoutcome', 'outcomes');
             $mform->addHelpButton('outcomes', 'selectoutcomes', 'outcome');

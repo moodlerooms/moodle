@@ -76,7 +76,7 @@ if (!empty($course)) {
     foreach($aliases as $alias) {
         $course->{'role_'.$alias->roleid} = $alias->name;
     }
-    if (!empty($CFG->enableoutcomes)) {
+    if (!empty($CFG->core_outcome_enable)) {
         require_once($CFG->dirroot.'/outcome/lib.php');
         $course->outcomesets = outcome_mapper()->get_outcome_set_mappings($course->id);
     }

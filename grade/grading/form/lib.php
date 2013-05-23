@@ -832,7 +832,7 @@ abstract class gradingform_instance {
     public function update_outcome_attempts($userids) {
         global $CFG;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return; // Turned off.
         }
         if (!$this->get_controller()->get_context() instanceof context_module) {

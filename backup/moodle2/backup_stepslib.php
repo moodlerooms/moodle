@@ -692,7 +692,7 @@ class backup_course_outcome_structure_step extends backup_structure_step {
     protected function execute_condition() {
         global $CFG;
 
-        return !empty($CFG->enableoutcomes);
+        return !empty($CFG->core_outcome_enable);
     }
 
     protected function define_structure() {
@@ -2050,7 +2050,7 @@ class backup_activity_outcomes_structure_step extends backup_structure_step {
     protected function execute_condition() {
         global $CFG;
 
-        return !empty($CFG->enableoutcomes);
+        return !empty($CFG->core_outcome_enable);
     }
 
     protected function define_structure() {

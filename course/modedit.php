@@ -228,7 +228,7 @@ if (!empty($add)) {
     } else {
         $pageheading = get_string('updatinga', 'moodle', $fullmodulename);
     }
-    if (!empty($CFG->enableoutcomes)) {
+    if (!empty($CFG->core_outcome_enable)) {
         require_once($CFG->dirroot.'/outcome/lib.php');
         $data->outcomes = outcome_mapper()->get_outcome_mappings_for_form('mod_'.$module->name, 'mod', $cm->id);
     }
@@ -372,7 +372,7 @@ if ($mform->is_cancelled()) {
             unset($fromform->introeditor);
         }
         $outcomesync = false;
-        if (!empty($CFG->enableoutcomes)) {
+        if (!empty($CFG->core_outcome_enable)) {
             require_once($CFG->dirroot.'/outcome/lib.php');
             $outcomearea = outcome_mapper()->save_outcome_mappings('mod_'.$fromform->modulename, 'mod', $fromform->coursemodule, $fromform->outcomes);
             if ($outcomearea) {
@@ -459,7 +459,7 @@ if ($mform->is_cancelled()) {
             $fromform->introformat = $introeditor['format'];
         }
         $outcomearea = false;
-        if (!empty($CFG->enableoutcomes)) {
+        if (!empty($CFG->core_outcome_enable)) {
             require_once($CFG->dirroot.'/outcome/lib.php');
             $outcomearea = outcome_mapper()->save_outcome_mappings('mod_'.$fromform->modulename, 'mod', $fromform->coursemodule, $fromform->outcomes);
         }

@@ -695,7 +695,7 @@ class question_usage_by_activity {
     public function record_outcomes($userids) {
         global $CFG;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return;
         }
         require_once($CFG->dirroot.'/outcome/lib.php');

@@ -2360,7 +2360,7 @@ class assignment_base {
                     $fs->delete_area_files($context->id, 'mod_assignment', 'response');
 
                     // Remove all outcome attempts except for those directly related to the assignment.
-                    if (!empty($CFG->enableoutcomes)) {
+                    if (!empty($CFG->core_outcome_enable)) {
                         require_once($CFG->dirroot.'/outcome/lib.php');
                         $excludearea = outcome_area()->get_area('mod_assignment', 'mod', $cm->id);
                         outcome_attempt()->remove_mod_attempts($cm->id, $excludearea);

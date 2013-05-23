@@ -1604,7 +1604,7 @@ class restore_course_outcome_structure_step extends restore_structure_step {
     protected function execute_condition() {
         global $CFG;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return false;
         }
 
@@ -2553,7 +2553,7 @@ class restore_activity_outcomes_structure_step extends restore_structure_step {
     protected function execute_condition() {
         global $CFG;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return false;
         }
 

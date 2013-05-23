@@ -796,7 +796,7 @@ ORDER BY
     protected function delete_question_outcome_attempts($contextids) {
         global $CFG;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return;
         }
         if (empty($contextids)) {

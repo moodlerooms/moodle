@@ -42,7 +42,7 @@ abstract class backup_outcome_area_plugin extends backup_plugin {
     public function define_outcome_area_structure(backup_nested_element $element, $plugintype, $pluginname, $outcomearea, $outcomeitemid) {
         global $CFG, $DB;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return;
         }
         // Note: there is only ever one area, but ensure XML looks right and should never fail/have problems.

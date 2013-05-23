@@ -603,7 +603,7 @@ class assign {
             }
 
             // Remove all outcome attempts except for those directly related to the assignment.
-            if (!empty($CFG->enableoutcomes) and !is_null($this->get_course_module())) {
+            if (!empty($CFG->core_outcome_enable) and !is_null($this->get_course_module())) {
                 require_once($CFG->dirroot.'/outcome/lib.php');
                 $excludearea = outcome_area()->get_area('mod_assign', 'mod', $this->get_course_module()->id);
                 outcome_attempt()->remove_mod_attempts($this->get_course_module()->id, $excludearea);

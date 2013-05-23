@@ -78,7 +78,7 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][sortorder]', 'value' => $criterion['sortorder']));
             $description = html_writer::tag('textarea', htmlspecialchars($criterion['description']), array('name' => '{NAME}[criteria][{CRITERION-id}][description]', 'cols' => '10', 'rows' => '5'));
 
-            if (!empty($CFG->enableoutcomes)) {
+            if (!empty($CFG->core_outcome_enable)) {
                 $selectoutcome = html_writer::link('#', get_string('selectoutcome', 'outcome'), array('role' => 'button', 'class' => 'selectoutcome'));
                 $selectoutcome .= html_writer::link('#', get_string('removeoutcome', 'outcome'), array('role' => 'button', 'class' => 'removeoutcome'));
                 $selectoutcome .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][outcomeid]', 'value' => (isset($criterion['outcomeid'])) ? $criterion['outcomeid'] : '0'));

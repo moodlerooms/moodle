@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die;
 if ($hassiteconfig) {
     $ADMIN->add('grades', new admin_externalpage(
         'core_outcomes',
-        get_string('outcomes', 'outcome'),
+        new lang_string('outcomes', 'outcome'),
         "$CFG->wwwroot/outcome/admin.php?action=outcomeset",
         array('moodle/site:config', 'moodle/outcome:edit')
     ));

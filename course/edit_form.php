@@ -190,7 +190,7 @@ class course_edit_form extends moodleform {
         }
 
 //--------------------------------------------------------------------------------
-        if (!empty($CFG->enableoutcomes)) {
+        if (!empty($CFG->core_outcome_enable)) {
             $mform->addElement('header', 'outcomes', get_string('outcomes', 'outcome'));
             $mform->addElement('mapoutcomeset', 'outcomesets');
             $mform->addHelpButton('outcomesets', 'selectoutcomesets', 'outcome');

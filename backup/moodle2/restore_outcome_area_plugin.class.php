@@ -50,7 +50,7 @@ abstract class restore_outcome_area_plugin extends restore_plugin {
     public function define_outcome_area_structure($areaitemid, $prefix = '') {
         global $CFG;
 
-        if (empty($CFG->enableoutcomes)) {
+        if (empty($CFG->core_outcome_enable)) {
             return array();
         }
         $this->areaitemid = $areaitemid;

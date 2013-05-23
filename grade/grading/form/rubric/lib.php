@@ -202,7 +202,7 @@ class gradingform_rubric_controller extends gradingform_controller {
                 }
             }
             // Save criterion outcome.
-            if ($doupdate and !empty($CFG->enableoutcomes)) {
+            if ($doupdate and !empty($CFG->core_outcome_enable)) {
                 $outcome = null;
                 if (!empty($criterion['outcomeid'])) {
                     $outcome = $criterion['outcomeid'];
@@ -269,7 +269,7 @@ class gradingform_rubric_controller extends gradingform_controller {
                     $DB->delete_records('gradingform_rubric_levels', array('criterionid' => $id));
 
                     // Remove criterion outcome area.
-                    if (!empty($CFG->enableoutcomes)) {
+                    if (!empty($CFG->core_outcome_enable)) {
                         outcome_area()->delete_area('gradingform_rubric', 'criterion', $id);
                     }
                 }
@@ -363,7 +363,7 @@ class gradingform_rubric_controller extends gradingform_controller {
                 $this->definition->rubric_criteria[$rcid]['levels'] = array_reverse($this->definition->rubric_criteria[$rcid]['levels'], true);
             }
         }
-        if (!empty($CFG->enableoutcomes) and !empty($this->definition->rubric_criteria)) {
+        if (!empty($CFG->core_outcome_enable) and !empty($this->definition->rubric_criteria)) {
             require_once($CFG->dirroot.'/outcome/lib.php');
 
             $mappings = outcome_mapper()->get_many_outcome_mappings(

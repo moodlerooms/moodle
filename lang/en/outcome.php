@@ -24,6 +24,14 @@
  * @author    Mark Nielsen
  */
 
+$string['disabled'] = 'Disabled';
+$string['legacyoutcomes'] = 'Legacy Outcomes';
+$string['newoutcomes'] = 'New Outcomes';
+$string['bothlegacynew'] = 'Both Legacy and New';
+$string['enableoutcomes_help'] = 'Choose which version of Outcomes to enable (also known as Competencies, Goals, Standards or Criteria).
+The New Outcomes system supports association of site-wide Outcomes to content, which students can be measured against and marked as having
+met the competency in their personal profile.  With Legacy Outcomes, activities can explicitly be graded using one or more scales that are
+tied to Legacy Outcome statements.';
 $string['outcomesetsforx'] = 'Outcome sets for {$a}';
 $string['outcomesets'] = 'Outcome sets';
 $string['completionmarkingforx'] = 'Completion marking for {$a}';

@@ -1668,7 +1668,7 @@ function quiz_groups_members_removed_handler($event) {
 function quiz_question_edited_handler($event) {
     global $CFG, $DB;
 
-    if (empty($CFG->enableoutcomes)) {
+    if (empty($CFG->core_outcome_enable)) {
         return;
     }
     require_once($CFG->dirroot.'/outcome/lib.php');

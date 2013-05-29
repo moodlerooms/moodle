@@ -42,6 +42,11 @@ class outcome_controller_report extends outcome_controller_abstract {
     protected $markhelper;
 
     /**
+     * @var outcome_service_report_helper
+     */
+    protected $reporthelper;
+
+    /**
      * Do any security checks needed for the passed action
      *
      * @abstract
@@ -54,6 +59,9 @@ class outcome_controller_report extends outcome_controller_abstract {
         switch($action) {
             case 'default':
             case 'report_marking':
+            case 'report_course_performance':
+            case 'report_course_coverage':
+            case 'report_course_unmapped':
                 require_capability('moodle/outcome:edit', $PAGE->context);
                 break;
             default:
@@ -66,7 +74,9 @@ class outcome_controller_report extends outcome_controller_abstract {
         parent::init($action);
 
         require_once(dirname(__DIR__).'/service/mark_helper.php');
+        require_once(dirname(__DIR__).'/service/report_helper.php');
 
+        $this->reporthelper = new outcome_service_report_helper();
         $this->markhelper = new outcome_service_mark_helper();
     }
 
@@ -74,7 +84,7 @@ class outcome_controller_report extends outcome_controller_abstract {
      * Overview of course outcome sets and their reports, etc.
      */
     public function default_action() {
-        global $PAGE, $COURSE;
+        global $PAGE, $COURSE, $OUTPUT;
 
         require_once(dirname(__DIR__).'/table/course_outcome_sets.php');
 
@@ -86,6 +96,7 @@ class outcome_controller_report extends outcome_controller_abstract {
         $table = new outcome_table_course_outcome_sets();
         $table->define_baseurl($this->new_url());
 
+        echo $OUTPUT->heading(get_string('outcomesets', 'outcome'));
         $this->renderer->course_outcome_sets($table);
     }
 
@@ -93,7 +104,7 @@ class outcome_controller_report extends outcome_controller_abstract {
      * Outcome marking table.
      */
     public function report_marking_action() {
-        global $PAGE, $COURSE, $USER;
+        global $PAGE, $COURSE, $USER, $OUTPUT;
 
         require_once(dirname(__DIR__).'/table/marking.php');
         require_once(dirname(__DIR__).'/form/marking_filter.php');
@@ -106,9 +117,6 @@ class outcome_controller_report extends outcome_controller_abstract {
         $PAGE->navbar->add(get_string('report:marking', 'outcome'));
 
         $mform = new outcome_form_marking_filter($this->new_url());
-        $table = new outcome_table_marking($mform);
-        $table->define_baseurl($this->new_url());
-
         if (!empty($outcomesetid)) {
             $mform->set_data(array('outcomesetid' => $outcomesetid));
         }
@@ -129,6 +137,91 @@ class outcome_controller_report extends outcome_controller_abstract {
             redirect($this->new_url());
         }
 
+        $table = new outcome_table_marking($mform);
+        $table->define_baseurl($this->new_url());
+
+        echo $OUTPUT->heading(get_string('report:marking', 'outcome'));
         $this->renderer->outcome_marking($mform, $table);
+    }
+
+    /**
+     * Outcomes course performance table.
+     */
+    public function report_course_performance_action() {
+        global $PAGE, $COURSE, $OUTPUT;
+
+        require_once(dirname(__DIR__).'/table/course_performance.php');
+        require_once(dirname(__DIR__).'/form/course_performance_filter.php');
+
+        $outcomesetid = optional_param('forceoutcomesetid', 0, PARAM_INT);
+
+        add_to_log($COURSE->id, 'outcome', 'view course outcome performance', 'course.php?contextid='.$PAGE->context->id);
+
+        $PAGE->set_title(get_string('outcomeperformanceforx', 'outcome', format_string($COURSE->fullname)));
+        $PAGE->navbar->add(get_string('report:course_performance', 'outcome'));
+
+        $mform = new outcome_form_course_performance_filter($this->new_url());
+        if (!empty($outcomesetid)) {
+            $mform->set_data(array('outcomesetid' => $outcomesetid));
+        }
+        $mform->handle_submit();
+
+        $table = new outcome_table_course_performance($mform, $this->reporthelper);
+        $table->define_baseurl($this->new_url());
+
+        echo $OUTPUT->heading(get_string('report:course_performance', 'outcome'));
+        $this->renderer->outcome_course_performance($mform, $table);
+    }
+
+    /**
+     * Outcomes course coverage table.
+     */
+    public function report_course_coverage_action() {
+        global $PAGE, $COURSE, $OUTPUT;
+
+        require_once(dirname(__DIR__).'/table/course_coverage.php');
+        require_once(dirname(__DIR__).'/form/course_coverage_filter.php');
+
+        $outcomesetid = optional_param('forceoutcomesetid', 0, PARAM_INT);
+
+        add_to_log($COURSE->id, 'outcome', 'view course outcome coverage', 'course.php?contextid='.$PAGE->context->id);
+
+        $PAGE->set_title(get_string('outcomecoverageforx', 'outcome', format_string($COURSE->fullname)));
+        $PAGE->navbar->add(get_string('report:course_coverage', 'outcome'));
+
+        $mform = new outcome_form_course_coverage_filter($this->new_url());
+        if (!empty($outcomesetid)) {
+            $mform->set_data(array('outcomesetid' => $outcomesetid));
+        }
+        $mform->handle_submit();
+
+        $table = new outcome_table_course_coverage($mform, $this->reporthelper);
+        $table->define_baseurl($this->new_url());
+
+        echo $OUTPUT->heading(get_string('report:course_coverage', 'outcome'));
+        $this->renderer->outcome_course_coverage($mform, $table);
+    }
+
+    /**
+     * Outcomes course unmapped content tables.
+     */
+    public function report_course_unmapped_action() {
+        global $PAGE, $COURSE, $OUTPUT;
+
+        require_once(dirname(__DIR__).'/factory.php');
+
+        add_to_log($COURSE->id, 'outcome', 'view course outcome unmapped', 'course.php?contextid='.$PAGE->context->id);
+
+        $PAGE->set_title(get_string('outcomeunmappedforx', 'outcome', format_string($COURSE->fullname)));
+        $PAGE->navbar->add(get_string('report:course_unmapped', 'outcome'));
+
+        $factory = new outcome_factory();
+        $coverages = $factory->build_coverages();
+
+        echo $OUTPUT->heading(get_string('report:course_unmapped', 'outcome'));
+        foreach ($coverages as $coverage) {
+            $coverage->set_courseid($COURSE->id);
+            $this->renderer->outcome_course_unmapped($coverage);
+        }
     }
 }

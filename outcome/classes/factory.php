@@ -85,11 +85,11 @@ class outcome_factory {
      * Build an area info instance.
      *
      * @param outcome_model_area $model
-     * @param cm_info $cm The course module that the area is associated to (EG: the cmid in outcome_used_areas)
+     * @param null|cm_info $cm The course module that the area is associated to (EG: the cmid in outcome_used_areas)
      * @throws coding_exception
      * @return outcome_area_info_interface
      */
-    public function build_area_info(outcome_model_area $model, cm_info $cm) {
+    public function build_area_info(outcome_model_area $model, cm_info $cm = null) {
         require_once(__DIR__.'/area/info_unknown.php');
 
         $normalized = normalize_component($model->component);
@@ -101,7 +101,9 @@ class outcome_factory {
             $areainfo = $this->build_generic_instance($classname, 'outcome_area_info_interface');
         }
         $areainfo->set_area($model);
-        $areainfo->set_cm($cm);
+        if ($cm instanceof cm_info) {
+            $areainfo->set_cm($cm);
+        }
 
         return $areainfo;
     }
@@ -149,5 +151,40 @@ class outcome_factory {
             $this->build_class_name($component, 'export.php', 'export'),
             'outcome_export_interface'
         );
+    }
+
+    /**
+     * Build an outcome coverage instance.
+     *
+     * @param $component
+     * @return outcome_coverage_interface
+     */
+    public function build_coverage($component) {
+        require_once(__DIR__.'/coverage/interface.php');
+
+        return $this->build_generic_instance(
+            $this->build_class_name($component, 'coverage.php', 'coverage'),
+            'outcome_coverage_interface'
+        );
+    }
+
+    /**
+     * Build outcome coverage instances.
+     *
+     * @return outcome_coverage_interface[]
+     */
+    public function build_coverages() {
+        $supportcomponents = get_plugin_list('outcomesupport');
+
+        $coverages = array();
+        foreach ($supportcomponents as $pluginname => $path) {
+            try {
+                $coverages[] = $this->build_coverage('outcomesupport_'.$pluginname);
+            } catch (Exception $e) {
+                // Just ignore this for now.
+            }
+        }
+
+        return $coverages;
     }
 }

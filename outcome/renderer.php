@@ -123,6 +123,44 @@ class core_outcome_renderer extends plugin_renderer_base {
     }
 
     /**
+     * Render outcome course peformance table
+     *
+     * @param moodleform $mform
+     * @param outcome_table_course_performance $table
+     */
+    public function outcome_course_performance(moodleform $mform, outcome_table_course_performance $table) {
+        $mform->display();
+        $table->out(50, false);
+    }
+
+    /**
+     * Render outcome course coverage table
+     *
+     * @param moodleform $mform
+     * @param outcome_table_course_coverage $table
+     */
+    public function outcome_course_coverage(moodleform $mform, outcome_table_course_coverage $table) {
+        $mform->display();
+        $table->out(50, false);
+    }
+
+    /**
+     * @param outcome_coverage_interface $coverage
+     */
+    public function outcome_course_unmapped(outcome_coverage_interface $coverage) {
+        $header = html_writer::tag('h3', $coverage->get_unmapped_content_header(),
+                array('class' => 'outcome-unmapped-header'));
+        $htmltable = $coverage->get_unmapped_content();
+        if (!($htmltable instanceof html_table) or empty($htmltable->data)) {
+            $output = html_writer::tag('h5', get_string('nothingtodisplay'));
+        } else {
+            $output  = html_writer::table($htmltable);
+        }
+
+        echo html_writer::tag('div', $header . $output, array('class' => 'outcome-unmapped-report'));
+    }
+
+    /**
      * @param object[] $courses
      * @return string
      */
@@ -165,6 +203,179 @@ class core_outcome_renderer extends plugin_renderer_base {
                     format_string($activity->name),
                     $activity->get_module_type_name(),
                     $this->activity_completion_icon($user, $activity, $progress),
+                ));
+
+                $activities->next();
+            }
+            usort($table->data, array($this, 'sort_html_rows'));
+            $output .= html_writer::table($table);
+        }
+        return $output;
+    }
+
+    /**
+     * @param outcome_model_outcome $outcome
+     * @param cm_info[] $content
+     * @return string
+     */
+    public function performance_associated_content(outcome_model_outcome $outcome, $content) {
+        $output = $this->outcome_display($outcome, 'p');
+
+        if (empty($content)) {
+            $output .= $this->output->heading(get_string('nothingtodisplay'), 5);
+        } else {
+            $table        = new html_table();
+            $table->head  = array(get_string('content', 'outcome'));
+            $table->attributes['class'] = 'generaltable outcome-course-associated-content';
+
+            usort($content, array($this, 'sort_cms'));
+
+            foreach ($content as $cminfo) {
+                $table->data[] = new html_table_row(array(format_string($cminfo->name)));
+            }
+            $output .= html_writer::table($table);
+        }
+        return $output;
+    }
+
+    /**
+     * @param outcome_model_outcome $outcome
+     * @param SplObjectStorage $attempts
+     * @return string
+     */
+    public function course_activity_attempt_grades(outcome_model_outcome $outcome, SplObjectStorage $attempts) {
+        /** @var outcome_area_info_interface $areainfo */
+        /** @var cm_info[] $cms */
+
+        $output = $this->outcome_display($outcome, 'p');
+
+        if ($attempts->count() == 0) {
+            $output .= $this->output->heading(get_string('nothingtodisplay'), 5);
+        } else {
+            $table        = new html_table();
+            $table->data  = array();
+            $table->head  = array(
+                get_string('content', 'outcome'),
+                get_string('type', 'outcome'),
+                get_string('grade'),
+                get_string('pointvalue', 'outcome'),
+            );
+            $table->attributes['class'] = 'generaltable outcome-course-activities-attempts';
+
+            // We group by activity, so get all possible activities and sort them.
+            $cms = array();
+            $attemptsbycm = array();
+            foreach ($attempts as $areainfo) {
+                $cmid = $areainfo->get_cm()->id;
+                $cms[$cmid] = $areainfo->get_cm();
+
+                if (!isset($attemptsbycm[$cmid])) {
+                    $attemptsbycm[$cmid] = array();
+                }
+                $attemptsbycm[$cmid][] = $areainfo;
+            }
+            usort($cms, array($this, 'sort_cms'));
+
+            // Now add each activity and any associated attempts to the table.
+            $rows = array();
+            foreach ($cms as $cm) {
+                // We always add activity row, regardless if there is grade info or not.
+                $cmrow = new html_table_row(array(
+                    format_string($cm->name),
+                    $cm->get_module_type_name(),
+                ));
+                $cmrows = array();
+                foreach ($attemptsbycm[$cm->id] as $areainfo) {
+                    if ($areainfo->get_area()->area == 'mod') {
+                        // Found the activity attempt, add attempt data to activity row.
+                        $row = $cmrow;
+                    } else {
+                        $row = new html_table_row(array($areainfo->get_item_name(), $areainfo->get_area_name()));
+                        $row->attributes['class'] = 'outcome-activity-content-attempt';
+                        $cmrows[] = $row;
+                    }
+                    $gradeinfo = $attempts->offsetGet($areainfo);
+                    $row->cells[] = new html_table_cell(round($gradeinfo['avegrade']).'%');
+                    $row->cells[] = new html_table_cell(round($gradeinfo['points']).'/'.
+                            round($gradeinfo['possiblepoints']));
+                }
+                usort($cmrows, array($this, 'sort_html_rows'));
+
+                // Ensure the activity row has enough cells.
+                $cmrow->cells = array_pad($cmrow->cells, 4, new html_table_cell('-'));
+                array_unshift($cmrows, $cmrow);
+
+                $rows = array_merge($rows, $cmrows);
+            }
+            $table->data = $rows;
+            $output .= html_writer::table($table);
+        }
+        return $output;
+    }
+
+    /**
+     * @param outcome_model_outcome $outcome
+     * @param SplObjectStorage $activities
+     * @return string
+     */
+    public function course_activity_completion(outcome_model_outcome $outcome, SplObjectStorage $activities) {
+        $output = $this->outcome_display($outcome, 'p');
+
+        if ($activities->count() == 0) {
+            $output .= $this->output->heading(get_string('nothingtodisplay'), 5);
+        } else {
+            $table        = new html_table();
+            $table->head  = array(get_string('activity'), get_string('type', 'outcome'), get_string('completion', 'outcome'));
+            $table->align = array(null, null, 'center');
+            $table->attributes['class'] = 'generaltable outcome-course-activity-completion';
+
+            $activities->rewind();
+            while ($activities->valid()) {
+                /** @var $activity cm_info */
+                $activity = $activities->current();
+                $progress = $activities->getInfo();
+
+                $completion = is_null($progress->completion) ? '-' : round($progress->completion).'%';
+                $table->data[] = new html_table_row(array(
+                    format_string($activity->name),
+                    $activity->get_module_type_name(),
+                    $completion,
+                ));
+
+                $activities->next();
+            }
+            usort($table->data, array($this, 'sort_html_rows'));
+            $output .= html_writer::table($table);
+        }
+        return $output;
+    }
+
+    /**
+     * @param outcome_model_outcome $outcome
+     * @param SplObjectStorage $activities
+     * @return string
+     */
+    public function course_activity_scale_grades(outcome_model_outcome $outcome, SplObjectStorage $activities) {
+        $output = $this->outcome_display($outcome, 'p');
+
+        if ($activities->count() == 0) {
+            $output .= $this->output->heading(get_string('nothingtodisplay'), 5);
+        } else {
+            $table        = new html_table();
+            $table->head  = array(get_string('activity'), get_string('type', 'outcome'), get_string('scalevalue', 'outcome'));
+            $table->attributes['class'] = 'generaltable outcome-course-scales-grades';
+
+            $activities->rewind();
+            while ($activities->valid()) {
+                /** @var $activity cm_info */
+                $activity = $activities->current();
+                /** @var grade_grade $grade */
+                $grade = $activities->getInfo();
+
+                $table->data[] = new html_table_row(array(
+                    format_string($activity->name),
+                    $activity->get_module_type_name(),
+                    $grade,
                 ));
 
                 $activities->next();
@@ -347,6 +558,117 @@ class core_outcome_renderer extends plugin_renderer_base {
         array_unshift($rows, $cmrow);
 
         return $rows;
+    }
+
+    /**
+     * @param outcome_model_outcome $outcome
+     * @param outcome_area_info_interface[] $activities
+     * @return string
+     */
+    public function coverage_activities(outcome_model_outcome $outcome, $activities) {
+        $output = $this->outcome_display($outcome, 'p');
+
+        if (empty($activities)) {
+            $output .= $this->output->heading(get_string('nothingtodisplay'), 5);
+        } else {
+            $table        = new html_table();
+            $table->data  = array();
+            $table->head  = array(
+                get_string('content', 'outcome'),
+                get_string('type', 'outcome'),
+            );
+            $table->attributes['class'] = 'generaltable outcome-coverage-activities';
+
+            // We group by activity, so get all possible activities and sort them.
+            /** @var cm_info[] $cms */
+            $cms = array();
+            $areasbycm = array();
+            foreach ($activities as $areainfo) {
+                $cminfo = $areainfo->get_cm();
+                $cms[$cminfo->id] = $cminfo;
+
+                if (!isset($areasbycm[$cminfo->id])) {
+                    $areasbycm[$cminfo->id] = array();
+                }
+                $areasbycm[$cminfo->id][] = $areainfo;
+            }
+            usort($cms, array($this, 'sort_cms'));
+
+            // Now add each activity and any associated attempts to the table.
+            foreach ($cms as $cm) {
+                $cmrow = new html_table_row(array(
+                    format_string($cm->name),
+                    $cm->get_module_type_name(),
+                ));
+
+                $rows = array();
+                foreach ($areasbycm[$cm->id] as $areainfo) {
+                    /** @var outcome_area_info_interface $areainfo */
+                    $modareaused = false;
+                    if ($areainfo->get_area()->area == 'mod') {
+                        $modareaused = true;
+                        continue;
+                    } else {
+                        $row = new html_table_row(array($areainfo->get_item_name(), $areainfo->get_area_name()));
+                        $row->attributes['class'] = 'outcome-sub-content';
+                        $rows[] = $row;
+                    }
+                }
+
+                if (empty($modareaused)) {
+                    $cmrow->attributes['class'] = 'outcome-coverage-implicit';
+                } else {
+                    $cmrow->attributes['class'] = 'outcome-coverage-explicit';
+                }
+
+                usort($rows, array($this, 'sort_html_rows'));
+                array_unshift($rows, $cmrow);
+
+                $table->data = array_merge($table->data, $rows);
+            }
+            $output .= html_writer::table($table);
+        }
+        return $output;
+    }
+
+    /**
+     * @param outcome_model_outcome $outcome
+     * @param SplObjectStorage $questions
+     * @return string
+     */
+    public function coverage_questions(outcome_model_outcome $outcome, $questions) {
+        $output = $this->outcome_display($outcome, 'p');
+
+        if (empty($questions)) {
+            $output .= $this->output->heading(get_string('nothingtodisplay'), 5);
+        } else {
+            $table        = new html_table();
+            $table->data  = array();
+            $table->head  = array(
+                get_string('content', 'outcome'),
+                get_string('type', 'outcome'),
+            );
+            $table->attributes['class'] = 'generaltable outcome-coverage-questions';
+
+            $questions->rewind();
+            while ($questions->valid()) {
+                /** @var $areainfo outcome_area_info_interface */
+                $areainfo = $questions->current();
+
+                $qbankonlystr = '';
+                if (!$questions->getInfo()) {
+                    $qbankonlystr = '*';
+                }
+                $table->data[] = new html_table_row(array($areainfo->get_item_name().$qbankonlystr,
+                    get_string('pluginname', $areainfo->get_area()->component)));
+
+                $questions->next();
+            }
+            usort($table->data, array($this, 'sort_html_rows'));
+            $output .= html_writer::table($table);
+        }
+
+        return $output;
     }
 
     /**

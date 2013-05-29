@@ -42,12 +42,11 @@ class outcome_table_manage_outcome_sets extends table_sql {
         parent::__construct(__CLASS__);
 
         $this->set_attribute('id', 'manage-outcome-sets');
-        $this->define_columns(array('name', 'count', 'action', 'reports'));
+        $this->define_columns(array('name', 'count', 'action'));
         $this->define_headers(array(
             get_string('fullname', 'outcome'),
             get_string('mappedcourses', 'outcome'),
             get_string('editdeleteexport', 'outcome'),
-            get_string('reports', 'outcome'),
         ));
         $this->column_class('count', 'col_mapped_courses');
         $this->no_sorting('action');
@@ -107,10 +106,6 @@ class outcome_table_manage_outcome_sets extends table_sql {
         $actions[] = $this->_export_link($row->name, $row->id);
 
         return implode('&nbsp;', $actions);
-    }
-
-    public function col_reports() {
-        return 'todo reports';
     }
 
     protected function _delete_link($name, $id, $title = null) {

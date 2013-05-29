@@ -97,6 +97,25 @@ abstract class outcome_form_abstract_filter extends outcome_form_abstract_cached
     }
 
     /**
+     * Add a drop-down populated with course groups.
+     */
+    public function define_course_groups() {
+        global $PAGE;
+
+        $options = array(0 => get_string('allgroups', 'outcome'));
+        $groups = groups_get_all_groups($PAGE->course->id);
+
+        foreach ($groups as $group) {
+            $options[$group->id] = format_string($group->name);
+        }
+
+        $mform = $this->_form;
+        $mform->addElement('select', 'groupid', get_string('group', 'outcome'), $options);
+        $mform->setDefault('groupid', 0);
+        $mform->setType('groupid', PARAM_INT);
+    }
+
+    /**
      * Get gradebook users - throws exception if none are found.
      *
      * @return array

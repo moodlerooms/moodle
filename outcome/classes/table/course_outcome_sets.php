@@ -39,19 +39,25 @@ require_once($CFG->libdir.'/tablelib.php');
  */
 class outcome_table_course_outcome_sets extends table_sql {
     public function __construct() {
-        global $COURSE;
+        global $COURSE, $PAGE;
 
         parent::__construct(__CLASS__);
 
+        $reports = array();
+        if (has_capability('moodle/grade:edit', $PAGE->context)) {
+            $reports[] = 'report:marking';
+            $reports[] = 'report:course_performance';
+            $reports[] = 'report:course_coverage';
+        }
+
+        $columns = array_merge(array('name'), $reports);
+        $headers = array_merge(array(get_string('fullname', 'outcome')), array_fill(0, count($reports), ''));
+
         $this->set_attribute('id', 'course-outcome-sets');
-        $this->define_columns(array('name', 'coverage', 'reports'));
-        $this->define_headers(array(
-            get_string('fullname', 'outcome'),
-            get_string('coverage', 'outcome'),
-            get_string('reports', 'outcome'),
-        ));
-        $this->no_sorting('coverage');
-        $this->no_sorting('reports');
+        $this->define_columns($columns);
+        $this->define_headers($headers);
+
+        call_user_func_array(array($this, 'no_sorting'), $reports);
         $this->collapsible(false);
 
         $from = '{outcome_sets} s INNER JOIN {outcome_used_sets} us ON s.id = us.outcomesetid';
@@ -62,18 +68,18 @@ class outcome_table_course_outcome_sets extends table_sql {
         return format_string($row->name);
     }
 
-    public function col_coverage($row) {
-        return 'todo';
+    public function other_cols($column, $row) {
+        return $this->_report_link($row, $column);
     }
 
-    public function col_reports($row) {
-        global $PAGE;
-
-        $reports = array();
-        if (has_capability('moodle/grade:edit', $PAGE->context)) {
-            $reports[] = $this->_report_link($row, 'report:marking');
-        }
-        return implode(' ', $reports);
+    public function wrap_html_finish() {
+        /** @var $url moodle_url */
+        $url = clone($this->baseurl);
+        $url->params(array(
+            'action' => 'report_course_unmapped',
+        ));
+        echo html_writer::tag('div', html_writer::link($url, get_string('report:course_unmapped', 'outcome')),
+                array('id' => 'outcome-unmapped-content-link'));
     }
 
     protected function _report_link($row, $identifier, $action = null) {

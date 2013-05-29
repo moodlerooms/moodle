@@ -79,6 +79,7 @@ class outcome_service_outcome_set_helper {
      * Clean and validate an outcome set model.
      *
      * @param outcome_model_outcome_set $model
+     * @throws moodle_exception
      * @throws coding_exception
      */
     public function clean_and_validate(outcome_model_outcome_set $model) {

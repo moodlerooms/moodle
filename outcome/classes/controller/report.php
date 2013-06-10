@@ -61,13 +61,14 @@ class outcome_controller_report extends outcome_controller_abstract {
             case 'report_marking':
             case 'report_course_performance':
             case 'report_course_coverage':
+                require_capability('moodle/grade:edit', $PAGE->context);
+                break;
             case 'report_course_unmapped':
-                require_capability('moodle/outcome:edit', $PAGE->context);
+                require_capability('moodle/outcome:mapoutcomes', $PAGE->context);
                 break;
             default:
                 throw new coding_exception("Missing capability check for $action action");
         }
-
     }
 
     public function init($action) {

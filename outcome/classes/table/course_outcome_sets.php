@@ -73,6 +73,11 @@ class outcome_table_course_outcome_sets extends table_sql {
     }
 
     public function wrap_html_finish() {
+        global $PAGE;
+
+        if (!has_capability('moodle/outcome:mapoutcomes', $PAGE->context)) {
+            return;
+        }
         /** @var $url moodle_url */
         $url = clone($this->baseurl);
         $url->params(array(

@@ -26,7 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) {
+global $CFG;
+
+if ($hassiteconfig and !empty($CFG->core_outcome_enable)) {
     $ADMIN->add('grades', new admin_externalpage(
         'core_outcomes',
         new lang_string('outcomes', 'outcome'),

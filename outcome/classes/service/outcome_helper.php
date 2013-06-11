@@ -116,10 +116,17 @@ class outcome_service_outcome_helper {
      * @param array|object $data
      */
     public function map_to_outcome(outcome_model_outcome $model, $data) {
+        $rawdata = array();
         foreach ($data as $name => $value) {
             if (property_exists($model, $name)) {
                 $model->$name = $value;
+            } else if (strpos($name, 'raw') === 0) {
+                $rawdata[substr($name, 3)] = $value;
             }
+        }
+        // Raw data parameters override main ones.  Just deal with it.
+        if (!empty($rawdata)) {
+            $this->map_to_outcome($model, $rawdata);
         }
     }
 
@@ -142,13 +149,11 @@ class outcome_service_outcome_helper {
     }
 
     /**
-     * Clean and validate an outcome model.
+     * Cleans an outcome model
      *
      * @param outcome_model_outcome $model
-     * @throws moodle_exception
-     * @throws coding_exception
      */
-    public function clean_and_validate(outcome_model_outcome $model) {
+    public function clean_outcome(outcome_model_outcome $model) {
         if (!empty($model->id)) {
             $model->id = clean_param($model->id, PARAM_INT);
         }
@@ -172,19 +177,6 @@ class outcome_service_outcome_helper {
         $model->subjects  = array_map('trim', $model->subjects);
         $model->edulevels = array_map('trim', $model->edulevels);
 
-        if ($model->description === '') {
-            throw new coding_exception('Outcome description property is required');
-        }
-        if (empty($model->outcomesetid)) {
-            throw new coding_exception('Outcome outcomesetid property is required');
-        }
-        if ($model->idnumber === '') {
-            throw new coding_exception('Outcome idnumber property is required');
-        }
-        if (!$this->outcomes->is_idnumber_unique($model->idnumber, $model->id)) {
-            throw new moodle_exception('outcomeidnumbererror', 'outcome', '', format_string($model->idnumber));
-        }
-
         // Due to cleaning, nulls get converted to zeros or empty strings.  Restore nulls if necessary.
         if ($model->parentid == 0) {
             $model->parentid = null;
@@ -192,6 +184,47 @@ class outcome_service_outcome_helper {
         if ($model->docnum === '') {
             $model->docnum = null;
         }
+    }
+
+    /**
+     * @param outcome_model_outcome $model
+     * @param bool $throw Little funky, but if true, throws first error found
+     * @return moodle_exception[]
+     * @throws moodle_exception
+     */
+    public function validate_outcome(outcome_model_outcome $model, $throw = true) {
+        $errors = array();
+        if ($model->description === '') {
+            $errors[] = new moodle_exception('outcomedescriptionrequired', 'outcome');
+        }
+        if (empty($model->outcomesetid)) {
+            $errors[] = new moodle_exception('outcomesetidrequired', 'outcome');
+        }
+        if ($model->idnumber === '') {
+            $errors[] = new moodle_exception('outcomeidnumberrequired', 'outcome');
+        }
+        if (!$this->outcomes->is_idnumber_unique($model->idnumber, $model->id)) {
+            $conflict = $this->outcomes->find_one_by(array('idnumber' => $model->idnumber), MUST_EXIST);
+            $errors[] = new moodle_exception('outcomeidnumbernotunique', 'outcome', '', array(
+                'idnumber'    => format_string($model->idnumber),
+                'description' => format_string($model->description),
+                'conflict'    => format_string($conflict->description),
+            ));
+        }
+        if ($throw and !empty($errors)) {
+            throw $errors[0];
+        }
+        return $errors;
+    }
+
+    /**
+     * Clean and validate an outcome model.
+     *
+     * @param outcome_model_outcome $model
+     */
+    public function clean_and_validate(outcome_model_outcome $model) {
+        $this->clean_outcome($model);
+        $this->validate_outcome($model);
     }
 
     /**

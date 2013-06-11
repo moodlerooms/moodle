@@ -71,7 +71,6 @@ YUI.add('moodle-core_outcome-dynamicpanel', function(Y) {
              * @private
              */
             _create_panel: function() {
-                // todo: what happens if panel gets too tall?
                 var panel = new Y.Panel({
                     srcNode: Y.Node.create('<div></div>'),
                     centered: true,
@@ -83,6 +82,7 @@ YUI.add('moodle-core_outcome-dynamicpanel', function(Y) {
 
                 panel.get('srcNode').addClass(Y.ClassNameManager.getClassName(NAME, 'panel'));
                 panel.plug(M.core_outcome.accessiblepanel);
+                panel.plug(M.core_outcome.scrollpanel);
                 panel.addButton({
                     value: M.str.outcome.close,
                     action: function(e) {
@@ -128,5 +128,5 @@ YUI.add('moodle-core_outcome-dynamicpanel', function(Y) {
         return new DYNAMICPANEL(config);
     };
 }, '@VERSION@', {
-    requires: ['base', 'panel', 'moodle-core_outcome-simpleio', 'classnamemanager', 'moodle-core_outcome-accessiblepanel']
+    requires: ['base', 'panel', 'moodle-core_outcome-simpleio', 'classnamemanager', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-scrollpanel']
 });

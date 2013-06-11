@@ -26,6 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(dirname(__DIR__).'/normalizer.php');
 require_once(dirname(__DIR__).'/model/area_repository.php');
 require_once(dirname(__DIR__).'/model/filter_repository.php');
 require_once(dirname(__DIR__).'/model/outcome_repository.php');
@@ -66,6 +67,11 @@ class outcome_service_mapper {
     protected $areas;
 
     /**
+     * @var outcome_normalizer
+     */
+    protected $normalizer;
+
+    /**
      * @param outcome_model_outcome_repository $outcomes
      * @param outcome_model_outcome_set_repository $outcomesets
      * @param outcome_model_filter_repository $filters
@@ -74,7 +80,8 @@ class outcome_service_mapper {
     public function __construct(outcome_model_outcome_repository $outcomes = null,
                                  outcome_model_outcome_set_repository $outcomesets = null,
                                  outcome_model_filter_repository $filters = null,
-                                 outcome_model_area_repository $areas = null) {
+                                 outcome_model_area_repository $areas = null,
+                                 outcome_normalizer $normalizer = null) {
 
         if (is_null($outcomes)) {
             $outcomes = new outcome_model_outcome_repository();
@@ -88,10 +95,14 @@ class outcome_service_mapper {
         if (is_null($areas)) {
             $areas = new outcome_model_area_repository();
         }
-        $this->outcomes = $outcomes;
+        if (is_null($normalizer)) {
+            $normalizer = new outcome_normalizer();
+        }
+        $this->outcomes    = $outcomes;
         $this->outcomesets = $outcomesets;
-        $this->filters = $filters;
-        $this->areas = $areas;
+        $this->filters     = $filters;
+        $this->areas       = $areas;
+        $this->normalizer  = $normalizer;
     }
 
     /**
@@ -149,7 +160,9 @@ class outcome_service_mapper {
                     'outcomesetid' => $outcomeset->id,
                     'name'         => format_string($outcomeset->name),
                     'edulevels'    => (isset($data['edulevels']) ? format_string($data['edulevels']) : null),
+                    'rawedulevels' => (isset($data['edulevels']) ? $data['edulevels'] : null),
                     'subjects'     => (isset($data['subjects']) ? format_string($data['subjects']) : null),
+                    'rawsubjects'  => (isset($data['subjects']) ? $data['subjects'] : null),
                 );
             }
         }
@@ -193,8 +206,8 @@ class outcome_service_mapper {
             list($outcomesets, $outcomes) = $this->get_filtered_area_outcomes($model, $courseid);
 
             return json_encode(array(
-                'outcomesets' => array_values($outcomesets),
-                'outcomes'    => array_values($outcomes),
+                'outcomesets' => $this->normalizer->normalize_outcome_sets($outcomesets),
+                'outcomes'    => $this->normalizer->normalize_outcomes($outcomes),
             ));
         }
         return '';

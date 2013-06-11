@@ -110,9 +110,11 @@ class outcome_service_outcome_set_helper {
             throw new coding_exception('Outcome idnumber property is required');
         }
         if (!$this->outcomesets->is_idnumber_unique($model->idnumber, $model->id)) {
+            $conflict = $this->outcomesets->find_one_by(array('idnumber' => $model->idnumber), MUST_EXIST);
             throw new moodle_exception('outcomesetidnumbererror', 'outcome', '', array(
                 'idnumber' => format_string($model->idnumber),
-                'name'     => format_string(($model->name))
+                'name'     => format_string($model->name),
+                'conflict' => format_string($conflict->name),
             ));
         }
     }

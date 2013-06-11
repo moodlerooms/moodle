@@ -218,7 +218,7 @@ if ($cm !== null){
 
 $toform->inpopup = $inpopup;
 
-if (!empty($CFG->core_outcome_enable) and !empty($question->id)) {
+if (!empty($CFG->core_outcome_enable) and !empty($question->id) and $qtypeobj->is_real_question_type()) {
     require_once($CFG->dirroot.'/outcome/lib.php');
     $toform->outcomes = outcome_mapper()->get_outcome_mappings_for_form('qtype_'.$question->qtype, 'qtype', $question->id);
 }

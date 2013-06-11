@@ -22,18 +22,18 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
             '{{else}}' +
             '<ul class="{{classMappedOutcomes}}" tabindex="-1">' +
             '{{#each outcomeSetList}}' +
-            '<li>{{name}}<ul>' +
+            '<li>{{{name}}}<ul>' +
             '{{#each outcomeList}}' +
             '<li tabindex="-1" class="outcome" data-outcomeid="{{id}}" data-outcomesetid="{{outcomesetid}}">' +
             '{{#unless ../../../isFrozen}}' +
             '<span class="actions">' +
             '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1">' +
             '<img src="{{../../../../urlImgDelete}}" />' +
-            '<span class="accesshide">{{getString "deletex" description}}</span>' +
+            '<span class="accesshide">{{{getString "deletex" description}}}</span>' +
             '</a>' +
             '</span>&nbsp;' +
             '{{/unless}}' +
-            '{{description}}</li>' +
+            '{{{description}}}</li>' +
             '{{/each}}' +
             '</ul></li>' +
             '{{/each}}' +

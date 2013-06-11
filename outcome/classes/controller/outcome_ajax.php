@@ -37,16 +37,23 @@ require_once(__DIR__.'/abstract.php');
  */
 class outcome_controller_outcome_ajax extends outcome_controller_abstract {
     /**
-     * @var outcome_model_outcome_repository
+     * @var outcome_normalizer
      */
-    public $outcomes;
+    public $normalizer;
+
+    /**
+     * @var outcome_service_outcome_helper
+     */
+    public $outcomehelper;
 
     public function init($action) {
         parent::init($action);
 
-        require_once(dirname(__DIR__).'/model/outcome_repository.php');
+        require_once(dirname(__DIR__).'/normalizer.php');
+        require_once(dirname(__DIR__).'/service/outcome_helper.php');
 
-        $this->outcomes = new outcome_model_outcome_repository();
+        $this->normalizer    = new outcome_normalizer();
+        $this->outcomehelper = new outcome_service_outcome_helper();
     }
 
     /**
@@ -60,7 +67,7 @@ class outcome_controller_outcome_ajax extends outcome_controller_abstract {
         global $PAGE;
 
         switch ($action) {
-            case 'is_outcome_idnumber_unique':
+            case 'validate_outcome':
                 require_capability('moodle/outcome:edit', $PAGE->context);
                 break;
             default:
@@ -69,18 +76,31 @@ class outcome_controller_outcome_ajax extends outcome_controller_abstract {
     }
 
     /**
-     * Determines if an outcome idnumber is unique or not
+     * Validates and cleans an outcome model.
+     *
+     * Returns the cleaned and validated model or an object
+     * with an array of errors.
      *
      * @return string
      */
-    public function is_outcome_idnumber_unique_action() {
+    public function validate_outcome_action() {
         require_sesskey();
 
-        $outcomeid = required_param('outcomeid', PARAM_INT);
-        $idnumber  = required_param('idnumber', PARAM_TEXT);
+        $data = required_param('data', PARAM_RAW_TRIMMED);
+        $data = json_decode($data);
 
-        $result = $this->outcomes->is_idnumber_unique($idnumber, $outcomeid);
+        $model = new outcome_model_outcome();
+        $this->outcomehelper->map_to_outcome($model, $data);
+        $this->outcomehelper->clean_outcome($model);
+        $errors = $this->outcomehelper->validate_outcome($model, false);
 
-        return json_encode(array('result' => $result));
+        if (!empty($errors)) {
+            $codes = array();
+            foreach ($errors as $error) {
+                $codes[] = $error->errorcode;
+            }
+            return json_encode(array('errors' => $codes));
+        }
+        return json_encode($this->normalizer->normalize_outcome($model, true));
     }
 }

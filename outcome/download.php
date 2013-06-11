@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Outcome Course Administration
+ * Download endpoint
  *
  * @package   core_outcome
  * @category  outcome
@@ -24,29 +24,30 @@
  * @author    Mark Nielsen
  */
 
-/** @var $CFG stdClass */
+ob_start();
+define('NO_DEBUG_DISPLAY', true);
+define('NO_OUTPUT_BUFFERING', true);
 require_once(dirname(__DIR__).'/config.php');
-require_once($CFG->libdir.'/adminlib.php');
 require_once(__DIR__.'/classes/controller/kernel.php');
-require_once(__DIR__.'/classes/controller/report.php');
+require_once(__DIR__.'/classes/controller/export.php');
 
-$action    = optional_param('action', 'default', PARAM_ALPHAEXT);
-$contextid = required_param('contextid', PARAM_INT);
+$action    = required_param('action', PARAM_ALPHAEXT);
+$contextid = optional_param('contextid', 0, PARAM_INT);
 
-list($context, $course, $cm) = get_context_info_array($contextid);
-
-require_login($course, false, $cm);
-
-// Force navigation to focus on outcome link.
-navigation_node::override_active_url(new moodle_url('/outcome/course.php', array('contextid' => $context->id)));
-
-/** @var $PAGE moodle_page */
-$PAGE->set_context($context);
-$PAGE->set_url('/outcome/course.php', array('action' => $action, 'contextid' => $context->id));
-$PAGE->set_pagelayout('report');
-
+if (empty($contextid)) {
+    require_login(SITEID, false, null, false, true);
+} else {
+    list($context, $course, $cm) = get_context_info_array($contextid);
+    require_login($course, false, $cm, false, true);
+}
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
 $router = new outcome_controller_router();
-$router->add_controller(new outcome_controller_report());
+$router->add_controller(new outcome_controller_export());
 
-$kernel = new outcome_controller_kernel($router);
-$kernel->handle($action);
+$kernel   = new outcome_controller_kernel($router);
+$callback = $kernel->resolve_controller_callback($action);
+
+// Manually call the callback - this prevents any mucking with output.
+call_user_func($callback);

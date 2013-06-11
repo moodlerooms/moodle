@@ -19,13 +19,13 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
         TEMPLATE = '{{#each outcomeSetList}}' +
             '{{#if outcomeList}}' +
             '<div class="{{../../cssOutcomeSetGroup}}">' +
-            '<div class="{{../../cssOutcomeSet}}" data-outcomesetid="{{id}}" data-before-aria-label="' + '{{getString "openx" name}}' + '" data-after-aria-label="' + '{{getString "closex" name}}' + '">' +
-            '{{name}}' +
+            '<div class="{{../../cssOutcomeSet}}" data-outcomesetid="{{id}}" data-before-aria-label="' + '{{{getString "openx" name}}}' + '" data-after-aria-label="' + '{{{getString "closex" name}}}' + '">' +
+            '{{{name}}}' +
             '</div>' +
             '<div class="{{../../cssOutcomeList}}">' +
-            '<span class="accesshide" aria-hidden="true">{{getString "outcomesforx" name}}</span>' +
+            '<span class="accesshide" aria-hidden="true">{{{getString "outcomesforx" name}}}</span>' +
             '{{#each outcomeList}}' +
-            '<div class="outcome" tabindex="-1" role="button" data-outcomeid="{{id}}">{{description}}</div>' +
+            '<div class="outcome" tabindex="-1" role="button" data-outcomeid="{{id}}">{{{description}}}</div>' +
             '{{/each}}' +
             '</div>' +
             '</div>' +
@@ -139,6 +139,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
             _bind_panel_ui: function() {
                 NODE_CONTAINER.delegate('click', this._handle_select_outcome, '.outcome', this);
 
+                var panel = this.get(PANEL);
                 NODE_CONTAINER.all('.' + CSS.OUTCOME_SET_GROUP).each(function(node) {
                     var controlled = node.one('.' + CSS.OUTCOME_LIST);
                     var control = node.one('.' + CSS.OUTCOME_SET);
@@ -151,6 +152,9 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                     });
                     control.core_outcome_ariacontrol.on('afterToggle', function() {
                         control.toggleClass('expanded');
+
+                        // Recenter after toggle because content of modal changed.
+                        panel.centered();
                     })
                 });
 
@@ -248,10 +252,10 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
              * @private
              */
             _create_panel: function() {
-                // todo: what happens if panel gets too tall?
                 var panel = new Y.Panel({
                     srcNode: Y.Node.create('<div></div>'),
                     headerContent: M.str.outcome.selectoutcomes,
+                    width: '800px',
                     centered: true,
                     render: true,
                     visible: false,
@@ -260,6 +264,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                 });
 
                 panel.plug(M.core_outcome.accessiblepanel);
+                panel.plug(M.core_outcome.scrollpanel);
                 panel.addButton({
                     value: M.str.outcome.ok,
                     action: this._handle_panel_save,
@@ -306,5 +311,5 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
         return new OUTCOMEPANEL(config);
     };
 }, '@VERSION@', {
-    requires: ['base', 'panel', 'handlebars', 'moodle-core_outcome-outcomemodel', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-ariacontrol', 'moodle-core_outcome-ariacontrolled', 'moodle-core-notification', 'moodle-core_outcome-simpleio']
+    requires: ['base', 'panel', 'handlebars', 'moodle-core_outcome-outcomemodel', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-scrollpanel', 'moodle-core_outcome-ariacontrol', 'moodle-core_outcome-ariacontrolled', 'moodle-core-notification', 'moodle-core_outcome-simpleio']
 });

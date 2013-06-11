@@ -1635,15 +1635,20 @@ class restore_course_outcome_structure_step extends restore_structure_step {
         $oldid = $data->id;
 
         $outcomesetid = $DB->get_field('outcome_sets', 'id', array('idnumber' => $data->idnumber));
-        if (!empty($outcomesetid)) {
-            $newid = $DB->insert_record('outcome_used_sets', (object) array(
-                'courseid' => $this->get_courseid(),
-                'outcomesetid' => $outcomesetid,
-                'filter' => $data->filter,
-            ));
-
-            $this->set_mapping('outcome_used_set', $oldid, $newid);
+        if (empty($outcomesetid)) {
+            return;
         }
+        // Prevent duplicates.
+        if ($DB->record_exists('outcome_used_sets', array('courseid' => $this->get_courseid(), 'outcomesetid' => $outcomesetid))) {
+            return;
+        }
+        $newid = $DB->insert_record('outcome_used_sets', (object) array(
+            'courseid' => $this->get_courseid(),
+            'outcomesetid' => $outcomesetid,
+            'filter' => $data->filter,
+        ));
+
+        $this->set_mapping('outcome_used_set', $oldid, $newid);
     }
 
     protected function process_outcome_mark($data) {

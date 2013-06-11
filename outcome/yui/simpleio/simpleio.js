@@ -22,7 +22,7 @@ YUI.add('moodle-core_outcome-simpleio', function(Y) {
                 if (!Lang.isString(method)) {
                     method = 'GET';
                 }
-                if (Lang.isUndefined(data.contextid)) {
+                if (Lang.isUndefined(data.contextid) && !Lang.isUndefined(this.get('contextId'))) {
                     data.contextid = this.get('contextId');
                 }
                 Y.io(this.get('url'), {
@@ -30,15 +30,19 @@ YUI.add('moodle-core_outcome-simpleio', function(Y) {
                     data: data,
                     on: {
                         complete: function(id, response) {
+                            var data = {};
                             try {
-                                var data = Y.JSON.parse(response.responseText);
-                                if (Lang.isValue(data.error)) {
-                                    new M.core.ajaxException(data);
-                                } else {
-                                    fn.call(context, data);
-                                }
+                                data = Y.JSON.parse(response.responseText);
                             } catch (e) {
+                                e.zIndex = 10000;
                                 new M.core.exception(e);
+                                return;
+                            }
+                            if (Lang.isValue(data.error)) {
+                                data.zIndex = 10000;
+                                new M.core.ajaxException(data);
+                            } else {
+                                fn.call(context, data);
                             }
                         }
                     }
@@ -51,7 +55,7 @@ YUI.add('moodle-core_outcome-simpleio', function(Y) {
                 /**
                  * Current context ID, used for AJAX requests
                  */
-                contextId: {},
+                contextId: { value: undefined },
                 /**
                  * Used for requests
                  */

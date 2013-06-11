@@ -109,9 +109,7 @@ class outcome_table_manage_outcome_sets extends table_sql {
     }
 
     protected function _delete_link($name, $id, $title = null) {
-        /** @var $url moodle_url */
-        $url = clone($this->baseurl);
-        $url->params(array(
+        $url = new moodle_url('/outcome/admin.php', array(
             'action'       => 'outcomeset_delete',
             'sesskey'      => sesskey(),
             'outcomesetid' => $id,
@@ -126,9 +124,7 @@ class outcome_table_manage_outcome_sets extends table_sql {
     }
 
     protected function _edit_link($name, $id, $title = null) {
-        /** @var $url moodle_url */
-        $url = clone($this->baseurl);
-        $url->params(array(
+        $url = new moodle_url('/outcome/admin.php', array(
             'action'       => 'outcomeset_edit',
             'outcomesetid' => $id,
         ));
@@ -142,9 +138,7 @@ class outcome_table_manage_outcome_sets extends table_sql {
     }
 
     protected function _export_link($name, $id, $title = null) {
-        /** @var $url moodle_url */
-        $url = clone($this->baseurl);
-        $url->params(array(
+        $url = new moodle_url('/outcome/download.php', array(
             'action'       => 'outcomeset_export',
             'outcomesetid' => $id,
         ));

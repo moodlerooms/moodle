@@ -37,6 +37,11 @@ require_once(__DIR__.'/abstract.php');
  */
 class outcome_controller_outcome_set extends outcome_controller_abstract {
     /**
+     * @var outcome_normalizer
+     */
+    public $normalizer;
+
+    /**
      * @var outcome_model_outcome_repository
      */
     public $outcomes;
@@ -71,11 +76,13 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
     public function init($action) {
         parent::init($action);
 
+        require_once(dirname(__DIR__).'/normalizer.php');
         require_once(dirname(__DIR__).'/model/outcome_repository.php');
         require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
         require_once(dirname(__DIR__).'/service/outcome_helper.php');
         require_once(dirname(__DIR__).'/service/outcome_set_helper.php');
 
+        $this->normalizer       = new outcome_normalizer();
         $this->outcomes         = new outcome_model_outcome_repository();
         $this->outcomesets      = new outcome_model_outcome_set_repository();
         $this->outcomehelper    = new outcome_service_outcome_helper($this->outcomes);
@@ -136,8 +143,10 @@ class outcome_controller_outcome_set extends outcome_controller_abstract {
             redirect($returnurl);
         }
         if (!empty($outcomesetid)) {
+            $normalized = $this->normalizer->normalize_outcomes($outcomes, true);
+
             $mform->set_data(get_object_vars($outcomeset));
-            $mform->set_data(array('outcomedata' => json_encode(array_values($outcomes))));
+            $mform->set_data(array('outcomedata' => json_encode($normalized)));
         }
         $mform->display();
     }

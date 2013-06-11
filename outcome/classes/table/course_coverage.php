@@ -22,7 +22,7 @@
  * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
- * @uathor    Sam Chaffee
+ * @author    Sam Chaffee
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -77,6 +77,7 @@ class outcome_table_course_coverage extends table_sql {
         $componentlikesql = $DB->sql_like('areas3.component', ':componentqtype');
         $contextlikesql   = $DB->sql_like('ctx.path', ':ctxpath');
 
+        $params = array();
         $fields = array('o.id', 'o.docnum', 'o.description', 'resources', 'activities', 'questions', 'questionsused');
 
         $outcomerepo = new outcome_model_outcome_repository();
@@ -86,7 +87,12 @@ class outcome_table_course_coverage extends table_sql {
             'outcomesetid' => $mform->get_cached_value('outcomesetid'),
             'courseid'     => $COURSE->id,
         ));
-        list($filtersql, $params) = $outcomerepo->filter_to_sql($filter);
+        list($filtersql, $filterparams) = $outcomerepo->filter_to_sql($filter);
+
+        // Filter down to assessable outcomes.
+        $filtersql->where .= ' AND o.deleted = :deleted AND o.assessable = :assessable';
+        $filterparams['deleted']    = 0;
+        $filterparams['assessable'] = 1;
 
         $from = "
             {outcome} o
@@ -131,20 +137,16 @@ class outcome_table_course_coverage extends table_sql {
                 ON t3.id = o.id
         ";
 
-        $where = "$filtersql->where AND o.deleted = :deleted AND o.assessable = :assessable GROUP BY o.id";
-
-        $params['courseid'] = $params['courseid2'] = $params['courseid3'] = $COURSE->id;
-        $params['deleted']       = 0;
-        $params['assessable'] = 1;
+        $params['courseid']       = $params['courseid2'] = $params['courseid3'] = $COURSE->id;
         $params['componentqtype'] = 'qtype_%';
-        $params['typequestion']  = 'qtype';
-        $params['contextid']  = $context->id;
-        $params['ctxpath']  = $context->path.'/%';
+        $params['typequestion']   = 'qtype';
+        $params['contextid']      = $context->id;
+        $params['ctxpath']        = $context->path.'/%';
 
-        $params = array_merge($params, $activitiesinparmas, $resourcesinparams);
+        $params = array_merge($params, $activitiesinparmas, $resourcesinparams, $filterparams);
 
-        $this->set_sql(implode(', ', $fields), $from, $where, $params);
-        $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM $from WHERE $where) count", $params);
+        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", $params);
+        $this->set_count_sql("SELECT COUNT(1) FROM {outcome} o $filtersql->join WHERE $filtersql->where", $filterparams);
     }
 
     /**

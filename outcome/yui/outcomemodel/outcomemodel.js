@@ -3,6 +3,23 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
         NEW_OUTCOME_ID = -1,
         URL_AJAX = M.cfg.wwwroot + '/outcome/ajax.php',
 
+    // Utility functions
+        /**
+         * @return {String}
+         */
+        SHORTEN_TEXT = function(text, length) {
+            if (Lang.isUndefined(length)) {
+                length = 30;
+            }
+            if (text.length > length) {
+                var s = text.substr(0, length - 1);
+                s = s.substr(0, s.lastIndexOf(' '));
+
+                return s + '...'
+            }
+            return text;
+        },
+
     // Validators
         /**
          * @return {boolean}
@@ -70,56 +87,30 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
      */
     var OUTCOME_MODEL = Y.Base.create('outcomeModel', Y.Model, [], {
         /**
-         * Validation: ensures things that are required are not
-         * empty and that the idnumber is unique against the server.
-         * @param attributes
-         * @param callback
+         * Sends the model to the server for validation and cleaning.
+         * Will update itself with new values from server if there are no
+         * errors.
+         * @param {Function} fn
+         * @param context
          */
-        validate: function(attributes, callback) {
-            var errors = [];
-            if (Lang.isNull(attributes.description)) {
-                errors.push('descriptionRequired');
-            }
-            if (Lang.isNull(attributes.idnumber)) {
-                errors.push('idnumberRequired');
-            } else {
-                var id = 0;
-                if (Lang.isValue(attributes.id) && attributes.id > 0) {
-                    id = attributes.id;
+        validate_and_update: function(fn, context) {
+            var io = new M.core_outcome.SimpleIO();
+            io.send({
+                action: 'validate_outcome',
+                sesskey: M.cfg.sesskey,
+                data: Y.JSON.stringify(this.toJSON())
+            }, function(data) {
+                if (Lang.isArray(data.errors)) {
+                    fn.call(context, data.errors);
+                } else {
+                    this.setAttrs(data);
+                    fn.call(context);
                 }
-                Y.io(URL_AJAX, {
-                    sync: true,
-                    data: {
-                        action: 'is_outcome_idnumber_unique',
-                        sesskey: M.cfg.sesskey,
-                        idnumber: attributes.idnumber,
-                        outcomeid: id
-                    },
-                    on: {
-                        complete: function(id, response) {
-                            try {
-                                var data = Y.JSON.parse(response.responseText);
-                                if (Lang.isValue(data.error)) {
-                                    errors.push('idnumberFailedToValidate');
-                                    data.zIndex = 5000;
-                                    new M.core.ajaxException(data);
-                                } else if (data.result === false) {
-                                    errors.push('idnumberNotUnique');
-                                }
-                            } catch (e) {
-                                errors.push('idnumberFailedToValidate');
-                                e.zIndex = 5000;
-                                new M.core.exception(e);
-                            }
-                        }
-                    }
-                });
-            }
-            if (errors.length > 0) {
-                callback(errors);
-            } else {
-                callback();
-            }
+            }, this)
+        },
+
+        get_short_description: function(length) {
+            return SHORTEN_TEXT(this.get('description'), length);
         },
 
         /**
@@ -138,13 +129,18 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
             id: { value: null, validator: INT_VALIDATOR, setter: SET_INT },
             parentid: { value: null, setter: SET_OPTIONAL_INT },
             idnumber: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
+            rawidnumber: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
             docnum: { value: null, setter: SET_OPTIONAL_STRING },
+            rawdocnum: { value: null, setter: SET_OPTIONAL_STRING },
             description: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
+            rawdescription: { value: null, validator: NON_EMPTY_STRING_VALIDATOR, setter: SET_OPTIONAL_STRING },
             assessable: { value: 1, validator: INT_VALIDATOR, setter: SET_BINARY_INT },
             deleted: { value: 0, validator: INT_VALIDATOR, setter: SET_BINARY_INT },
             sortorder: { value: 0, validator: INT_VALIDATOR, setter: SET_POSITIVE_INT },
             edulevels: { value: [], validator: Lang.isArray },
+            rawedulevels: { value: [], validator: Lang.isArray },
             subjects: { value: [], validator: Lang.isArray },
+            rawsubjects: { value: [], validator: Lang.isArray },
             hasChanged: { value: false, validator: Lang.isBoolean, getter: '_get_changed' }
         }
     });
@@ -296,6 +292,8 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
          */
         add_new_outcome: function(model) {
             if (!model.isNew()) {
+                // Update existing model and bail.
+                this.getById(model.get('id')).setAttrs(model.toJSON());
                 return;
             }
             // Preserve for below
@@ -387,6 +385,9 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
      * @type {*}
      */
     var OUTCOME_SET_MODEL = Y.Base.create('outcomeSetModel', Y.Model, [], {
+        get_short_name: function(length) {
+            return SHORTEN_TEXT(this.get('name'), length);
+        }
     }, {
         ATTRS: {
             id: { value: null, validator: INT_VALIDATOR, setter: SET_INT },
@@ -415,11 +416,12 @@ YUI.add('moodle-core_outcome-outcomemodel', function(Y) {
     });
 
     M.core_outcome = M.core_outcome || {};
+    M.core_outcome.shortenText = SHORTEN_TEXT;
     M.core_outcome.OutcomeModel = OUTCOME_MODEL;
     M.core_outcome.OutcomeList = OUTCOME_LIST;
     M.core_outcome.OutcomeSetModel = OUTCOME_SET_MODEL;
     M.core_outcome.OutcomeSetList = OUTCOME_SET_LIST;
 
 }, '@VERSION@', {
-    requires: ['base', 'model', 'model-list', 'io-base', 'moodle-core-notification']
+    requires: ['base', 'model', 'model-list', 'moodle-core_outcome-simpleio', 'json-stringify']
 });

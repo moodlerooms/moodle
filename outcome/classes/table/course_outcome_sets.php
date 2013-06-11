@@ -87,6 +87,12 @@ class outcome_table_course_outcome_sets extends table_sql {
                 array('id' => 'outcome-unmapped-content-link'));
     }
 
+    function print_nothing_to_display() {
+        global $CFG, $COURSE, $OUTPUT;
+
+        echo $OUTPUT->box(get_string('nooutcomesetsmapped', 'outcome', $CFG->wwwroot.'/course/edit.php?id='.$COURSE->id));
+    }
+
     protected function _report_link($row, $identifier, $action = null) {
         if (is_null($action)) {
             $action = str_replace(':', '_', $identifier);

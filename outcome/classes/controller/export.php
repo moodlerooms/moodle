@@ -70,7 +70,5 @@ class outcome_controller_export extends outcome_controller_abstract {
 
         list($path, $filename) = $this->exporthelper->export_outcome_set_by_id($component, $outcomesetid);
         $this->exporthelper->send_export_file($path, $filename);
-
-        die;
     }
 }

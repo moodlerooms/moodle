@@ -708,7 +708,13 @@ class question_usage_by_activity {
             if (!$attempt->get_state()->is_finished()) {
                 continue;
             }
-            $question   = $attempt->get_question();
+            if (is_null($attempt->get_mark())) {
+                continue; // Don't record unanswered questions.
+            }
+            $question = $attempt->get_question();
+            if (!$question->qtype->is_real_question_type()) {
+                continue; // Don't record non-questions.
+            }
             $usedareaid = outcome_area()->get_used_area_id('qtype_'.$question->get_type_name(), 'qtype',
                 $question->id, $this->context->instanceid);
 
@@ -719,9 +725,9 @@ class question_usage_by_activity {
             $model->outcomeusedareaid = $usedareaid;
             $model->itemid            = $attempt->get_database_id();
             $model->percentgrade      = 0;
+            $model->rawgrade          = $attempt->get_mark();
             $model->mingrade          = $attempt->get_max_mark() * $attempt->get_min_fraction();
             $model->maxgrade          = $attempt->get_max_mark();
-            $model->rawgrade          = $attempt->get_mark();
             $model->timemodified      = $attempt->get_last_action_time();
             $model->timecreated       = $attempt->get_last_action_time();
 

@@ -37,4 +37,12 @@ class restore_outcomesupport_qtype_plugin extends restore_outcome_area_plugin {
     public function define_question_plugin_structure() {
         return $this->define_outcome_area_structure('question');
     }
+
+    public function process_outcome_area($data) {
+        // Only restore outcome mapping on created questions.
+        $newid = $this->get_mapping('question_created', $data['itemid']);
+        if (!empty($newid)) {
+            parent::process_outcome_area($data);
+        }
+    }
 }

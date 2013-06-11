@@ -154,15 +154,15 @@ class MoodleQuickForm_map_outcome_set extends HTML_QuickForm_element {
                     $filter->outcomesetid = $rawvalue->outcomesetid;
                     $filterlist[$filter->outcomesetid] = $filter;
                 }
-                if (!property_exists($rawvalue, 'edulevels')) {
-                    $rawvalue->edulevels = null;
+                if (!property_exists($rawvalue, 'rawedulevels')) {
+                    $rawvalue->rawedulevels = null;
                 }
-                if (!property_exists($rawvalue, 'subjects')) {
-                    $rawvalue->subjects = null;
+                if (!property_exists($rawvalue, 'rawsubjects')) {
+                    $rawvalue->rawsubjects = null;
                 }
                 $filterlist[$rawvalue->outcomesetid]->add_filter(
-                    $rawvalue->edulevels,
-                    $rawvalue->subjects
+                    $rawvalue->rawedulevels,
+                    $rawvalue->rawsubjects
                 );
             }
             $value = $filterlist;

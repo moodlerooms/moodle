@@ -39,38 +39,32 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
             '<span class="actions">' +
             '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1">' +
             '<img src="{{../../urlImgDelete}}" />' +
-            '<span class="accesshide">{{getString "deletex" name}}</span>' +
+            '<span class="accesshide">{{{getString "deletex" name}}}</span>' +
             '</a>' +
             '</span>' +
             '{{/unless}}' +
-            '&nbsp;<span id="outcomeset_{{id}}" tabindex="-1">{{name}}</span>' +
+            '&nbsp;<span id="outcomeset_{{id}}" tabindex="-1">{{{name}}}</span>' +
             '</li>' +
             '{{/filters}}' +
             '</ul>' +
             '{{/if}}',
         ADD_TEMPLATE = '<table role="presentation">' +
             '{{#if filters}}' +
-            '<tr><th>{{stroutcomeset}}</th><th>{{streducationlevel}}</th><th>{{strsubject}}</th><th></th></tr>' +
+            '<tr><th>{{stroutcomeset}}</th><th>{{strsubject}}</th><th>{{streducationlevel}}</th><th></th></tr>' +
             '{{/if}}' +
             '{{#filters}}' +
-            '<tr><td>{{name}}</td><td>{{edulevels}}</td><td>{{subjects}}</td><td></td></tr>' +
+            '<tr><td>{{{shorten name}}}</td>' +
+            '<td>{{#if subjects}}{{{subjects}}}{{else}}{{../../strallsubjects}}{{/if}}</td>' +
+            '<td>{{#if edulevels}}{{{edulevels}}}{{else}}{{../../stralleducationlevels}}{{/if}}</td>' +
+            '<td></td></tr>' +
             '{{/filters}}' +
             '<tr>' +
             '<td>' +
             '<label for="outcomesets" class="accesshide">{{stroutcomeset}}</label>' +
             '<select id="outcomesets">' +
             '{{#outcomesets}}' +
-            '<option value="{{id}}" {{selected id}}>{{name}}</option>' +
+            '<option value="{{id}}" {{selected id}}>{{{shorten name}}}</option>' +
             '{{/outcomesets}}' +
-            '</select>' +
-            '</td>' +
-            '<td>' +
-            '<label for="edulevels" class="accesshide">{{streducationlevels}}</label>' +
-            '<select id="edulevels" {{disableifempty edulevels}}>' +
-            '<option value="0">{{stralleducationlevels}}</option>' +
-            '{{#each edulevels}}' +
-            '<option value="{{this}}">{{this}}</option>' +
-            '{{/each}}' +
             '</select>' +
             '</td>' +
             '<td>' +
@@ -78,7 +72,16 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
             '<select id="subjects" {{disableifempty subjects}}>' +
             '<option value="0">{{strallsubjects}}</option>' +
             '{{#each subjects}}' +
-            '<option value="{{this}}">{{this}}</option>' +
+            '<option value="{{this.rawname}}">{{{this.name}}}</option>' +
+            '{{/each}}' +
+            '</select>' +
+            '</td>' +
+            '<td>' +
+            '<label for="edulevels" class="accesshide">{{streducationlevels}}</label>' +
+            '<select id="edulevels" {{disableifempty edulevels}}>' +
+            '<option value="0">{{stralleducationlevels}}</option>' +
+            '{{#each edulevels}}' +
+            '<option value="{{this.rawname}}">{{{this.name}}}</option>' +
             '{{/each}}' +
             '</select>' +
             '</td>' +
@@ -93,6 +96,10 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
 
         renderSelectedHelper = function(value) {
             return SELECTED_OUTCOMESET == value ? 'selected="selected"' : '';
+        },
+
+        renderShortText = function(text) {
+            return M.core_outcome.shortenText(text, 50);
         },
 
         renderDisableIfEmptyHelper = function(value) {
@@ -124,6 +131,7 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                 Y.Handlebars.registerHelper('getString', renderGetStringHelper);
                 Y.Handlebars.registerHelper('selected', renderSelectedHelper);
                 Y.Handlebars.registerHelper('disableifempty', renderDisableIfEmptyHelper);
+                Y.Handlebars.registerHelper('shorten', renderShortText);
                 LIST_TEMPLATE_COMPILED = Y.Handlebars.compile(LIST_TEMPLATE);
                 ADD_TEMPLATE_COMPILED = Y.Handlebars.compile(ADD_TEMPLATE);
 
@@ -319,21 +327,35 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
             _handle_add_button: function(e) {
                 e.preventDefault();
 
-                var srcNode = this.get(PANEL).get(SRC_NODE);
-
-                var id = srcNode.one(SELECT_OUTCOMESET).get('value');
-                var name = srcNode.one(SELECT_OUTCOMESET).one('option[selected]').get('text');
-                var edulevel = srcNode.one(SELECT_EDU_LEVELS).get('value');
-                var subject  = srcNode.one(SELECT_SUBJECTS).get('value');
+                var srcNode = this.get(PANEL).get(SRC_NODE),
+                    id = srcNode.one(SELECT_OUTCOMESET).get('value'),
+                    subjectselect = srcNode.one(SELECT_SUBJECTS),
+                    edulevelselect = srcNode.one(SELECT_EDU_LEVELS),
+                    rawedulevel = edulevelselect.get('value'),
+                    edulevel = edulevelselect.get('options').item(edulevelselect.get('selectedIndex')).getHTML(),
+                    rawsubject  = subjectselect.get('value'),
+                    subject = subjectselect.get('options').item(subjectselect.get('selectedIndex')).getHTML();
 
                 if (id === '0') {
                     return;
                 }
+
+                var name = 'notFound';
+                Y.Array.some(OUTCOME_SETS_MENU, function(value) {
+                    if (value['id'] == id) {
+                        name = value['name'];
+                        return true;
+                    }
+                    return false;
+                });
+
                 NEW_LIST.add({
                     outcomesetid: id,
                     name: name,
                     edulevels: edulevel,
-                    subjects: subject
+                    rawedulevels: rawedulevel,
+                    subjects: subject,
+                    rawsubjects: rawsubject
                 });
                 this._reset_panel_ui();
             },
@@ -485,15 +507,15 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
          */
         get_display_name: function() {
             var name = this.get('name');
-            if (this.get('edulevels') !== null && this.get('edulevels') !== '') {
-                name = name + ', ' + M.str.outcome.educationlevel + ': ' + this.get('edulevels');
-            } else {
-                name = name + ', ' + M.str.outcome.alleducationlevels;
-            }
             if (this.get('subjects') !== null && this.get('subjects') !== '') {
                 name = name + ', ' + M.str.outcome.subject + ': ' + this.get('subjects');
             } else {
                 name = name + ', ' + M.str.outcome.allsubjects
+            }
+            if (this.get('edulevels') !== null && this.get('edulevels') !== '') {
+                name = name + ', ' + M.str.outcome.educationlevel + ': ' + this.get('edulevels');
+            } else {
+                name = name + ', ' + M.str.outcome.alleducationlevels;
             }
             return name;
         },
@@ -539,9 +561,17 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
              */
             edulevels: { value: null, writeOnce: 'initOnly', setter: '_edulevels_setter' },
             /**
+             * The raw, unfiltered value of education level
+             */
+            rawedulevels: { value: null, writeOnce: 'initOnly', setter: '_edulevels_setter' },
+            /**
              * The subject filter option
              */
-            subjects: { value: null, writeOnce: 'initOnly', setter: '_no_zero_setter' }
+            subjects: { value: null, writeOnce: 'initOnly', setter: '_no_zero_setter' },
+            /**
+             * The raw, unfiltered value of subject
+             */
+            rawsubjects: { value: null, writeOnce: 'initOnly', setter: '_no_zero_setter' }
         }
     });
 
@@ -609,5 +639,5 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
         return widget;
     };
 }, '@VERSION@', {
-    requires: ['widget', 'model', 'model-list', 'handlebars', 'panel', 'json-parse', 'json-stringify', 'moodle-core_outcome-accessiblepanel', 'moodle-core-notification', 'moodle-core_outcome-simpleio']
+    requires: ['widget', 'model', 'model-list', 'handlebars', 'panel', 'json-parse', 'json-stringify', 'moodle-core_outcome-outcomemodel', 'moodle-core_outcome-accessiblepanel', 'moodle-core-notification', 'moodle-core_outcome-simpleio']
 });

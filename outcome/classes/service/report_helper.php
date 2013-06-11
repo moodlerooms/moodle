@@ -84,10 +84,11 @@ class outcome_service_report_helper {
         INNER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
         INNER JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
         INNER JOIN {course_modules} cm ON cm.id = used.cmid AND cm.completion > ? AND areas.area = ?
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = ?
    LEFT OUTER JOIN {course_modules_completion} comp ON cm.id = comp.coursemoduleid AND comp.userid = ?
              WHERE o.id = ?
                AND cm.course = ?
-        ', array(0, 'mod', $userid, $outcomeid, $courseid));
+        ', array(0, 'mod', 1, $userid, $outcomeid, $courseid));
 
         $modinfo    = get_fast_modinfo($courseid);
         $activities = new SplObjectStorage();
@@ -117,6 +118,7 @@ class outcome_service_report_helper {
             'completionstate' => 1,
             'completion' => 0,
             'area' => 'mod',
+            'visible' => 1,
             'outcomeid' => $outcomeid,
             'courseid' => $courseid
         );
@@ -132,8 +134,8 @@ class outcome_service_report_helper {
         INNER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
         INNER JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
         INNER JOIN {course_modules} cm ON cm.id = used.cmid AND cm.completion > :completion AND areas.area = :area
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = :visible
    LEFT OUTER JOIN {course_modules_completion} comp ON cm.id = comp.coursemoduleid AND comp.userid = u.id
-
              WHERE o.id = :outcomeid
                AND cm.course = :courseid
           GROUP BY cm.id
@@ -172,7 +174,7 @@ class outcome_service_report_helper {
         INNER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
         INNER JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
         INNER JOIN {course_modules} cm ON cm.id = used.cmid
-        INNER JOIN {modules} mods ON mods.id = cm.module
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = ?
         INNER JOIN {grade_items} gi ON gi.itemtype = ?
                                    AND gi.iteminstance = cm.instance
                                    AND gi.itemmodule = mods.name
@@ -180,7 +182,7 @@ class outcome_service_report_helper {
                                    AND gi.gradetype = ?
              WHERE o.id = ?
                AND cm.course = ?
-        ', array('mod', 0, GRADE_TYPE_SCALE, $outcomeid, $courseid));
+        ', array(1, 'mod', 0, GRADE_TYPE_SCALE, $outcomeid, $courseid));
 
         $modinfo    = get_fast_modinfo($courseid);
         $activities = new SplObjectStorage();
@@ -222,9 +224,10 @@ class outcome_service_report_helper {
                            AND a.userid = latest.userid
                            AND a.timemodified = latest.timemodified
         INNER JOIN {course_modules} cm ON cm.id = used.cmid
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = ?
              WHERE o.id = ?
                AND cm.course = ?
-        ', array($userid, $outcomeid, $courseid));
+        ', array($userid, 1, $outcomeid, $courseid));
 
         $modinfo  = get_fast_modinfo($courseid);
         $attempts = new SplObjectStorage();
@@ -257,6 +260,7 @@ class outcome_service_report_helper {
      */
     public function get_performance_associated_content($outcomeid, $courseid) {
         $params = array(
+            'visible' => 1,
             'outcomeid' => $outcomeid,
             'courseid' => $courseid,
         );
@@ -268,6 +272,7 @@ class outcome_service_report_helper {
         INNER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
         INNER JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
         INNER JOIN {course_modules} cm ON cm.id = used.cmid
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = :visible
              WHERE o.id = :outcomeid AND cm.course = :courseid
           GROUP BY cm.id
         ", $params);
@@ -290,6 +295,7 @@ class outcome_service_report_helper {
      */
     public function get_activity_attempts_by_course($outcomeid, $courseid, $groupid = 0) {
         $params = array(
+            'visible' => 1,
             'outcomeid' => $outcomeid,
             'courseid' => $courseid,
         );
@@ -315,6 +321,7 @@ class outcome_service_report_helper {
                            AND a.userid = latest.userid
                            AND a.timemodified = latest.timemodified
         INNER JOIN {course_modules} cm ON cm.id = used.cmid
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = :visible
              WHERE o.id = :outcomeid
                AND cm.course = :courseid
           GROUP BY areas.id
@@ -357,6 +364,7 @@ class outcome_service_report_helper {
         $params = array(
             'itemtype' => 'mod',
             'itemnumber' => 0,
+            'visible' => 1,
             'gradetype' => GRADE_TYPE_SCALE,
             'outcomeid' => $outcomeid,
             'courseid' => $courseid
@@ -371,7 +379,7 @@ class outcome_service_report_helper {
         INNER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
         INNER JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
         INNER JOIN {course_modules} cm ON cm.id = used.cmid
-        INNER JOIN {modules} mods ON mods.id = cm.module
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = :visible
         INNER JOIN {grade_items} gi ON gi.itemtype = :itemtype
                                    AND gi.iteminstance = cm.instance
                                    AND gi.itemmodule = mods.name

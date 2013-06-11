@@ -24,6 +24,10 @@
  * @author    Mark Nielsen
  */
 
+$string['outcomedescriptionrequired'] = 'Outcome description is required.';
+$string['outcomesetidrequired'] = 'Outcome set ID is required.';
+$string['outcomeidnumberrequired'] = 'Outcome Unique ID is required.';
+$string['nooutcomesetsmapped'] = 'There are no outcome sets currently in use in this course. You may identify outcome set usage in the <a href="{$a}" title="Edit course settings">Course Settings</a> page.';
 $string['disabled'] = 'Disabled';
 $string['legacyoutcomes'] = 'Legacy Outcomes';
 $string['newoutcomes'] = 'New Outcomes';
@@ -73,7 +77,6 @@ $string['editx'] = 'Edit {$a}';
 $string['addchildoutcome'] = 'Add an outcome underneath {$a}';
 $string['changessavedtox'] = 'Changes saved to {$a}';
 $string['idnumbernotunique'] = 'The value entered is not unique.';
-$string['idnumbervalidationfailed'] = 'Validation failed, please try again.';
 $string['outcomesetdeleted'] = 'The "{$a->name}" outcome set has successfully been deleted ({$a->undo}).';
 $string['close'] = 'Close';
 $string['undo'] = 'Undo';
@@ -133,8 +136,8 @@ $string['fileuploadfailed'] = 'The file failed to upload, please try again.';
 $string['importcomplete'] = 'Successfully imported <em>{$a}</em> outcome set.';
 $string['export'] = 'Export';
 $string['exportx'] = 'Export {$a}';
-$string['outcomeidnumbererror'] = 'Outcome cannot be created because the Unique ID of <em>{$a}</em> is already in use by another outcome.  Please use a different Unique ID and try again.';
-$string['outcomesetidnumbererror'] = 'Outcome set <em>{$a->name}</em> cannot be created because the Unique ID of <em>{$a->idnumber}</em> is already in use by another outcome set.  Please use a different Unique ID and try again.';
+$string['outcomeidnumbernotunique'] = 'Outcome <em>{$a->description}</em> cannot be created because the Unique ID of <em>{$a->idnumber}</em> is already in use by <em>{$a->conflict}</em> outcome.';
+$string['outcomesetidnumbererror'] = 'Outcome set <em>{$a->name}</em> cannot be created because the Unique ID of <em>{$a->idnumber}</em> is already in use by <em>{$a->conflict}</em> outcome set.';
 $string['nogradebookusers'] = 'This report cannot be run because there are no gradable users enrolled in the course.';
 $string['nothingimported'] = 'Nothing was imported, perhaps the wrong import format was selected.  Please verify the file contents, file format and try again.';
 $string['group'] = 'Group';

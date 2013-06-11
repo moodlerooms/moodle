@@ -25,7 +25,7 @@
  */
 
 define('AJAX_SCRIPT', true);
-// TODO: uncomment this after development is done define('NO_DEBUG_DISPLAY', true);
+define('NO_DEBUG_DISPLAY', true);
 
 /** @var $CFG stdClass */
 require_once(dirname(__DIR__).'/config.php');

@@ -98,12 +98,10 @@ class outcome_form_outcome_set extends moodleform {
         $mform->addElement('hidden', 'outcome_parentid', 0, array('id' => 'outcome_parentid'));
         $mform->setType('outcome_parentid', PARAM_INT);
 
-        $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
-            array('class' => 'error', 'data-errorcode' => 'idnumberRequired')));
+        $mform->addElement('html', html_writer::tag('div', get_string('outcomeidnumberrequired', 'outcome'),
+            array('class' => 'error', 'data-errorcode' => 'outcomeidnumberrequired')));
         $mform->addElement('html', html_writer::tag('div', get_string('idnumbernotunique', 'outcome'),
-            array('class' => 'error', 'data-errorcode' => 'idnumberNotUnique')));
-        $mform->addElement('html', html_writer::tag('div', get_string('idnumbervalidationfailed', 'outcome'),
-            array('class' => 'error', 'data-errorcode' => 'idnumberFailedToValidate')));
+            array('class' => 'error', 'data-errorcode' => 'outcomeidnumbernotunique')));
         $mform->addElement('text', 'outcome_idnumber', get_string('idnumber', 'outcome'),
             array('size' => '40', 'maxlength' => '255'));
         $mform->setType('outcome_idnumber', PARAM_TEXT);
@@ -126,8 +124,8 @@ class outcome_form_outcome_set extends moodleform {
         $mform->addElement('checkbox', 'outcome_assessable', '', '&nbsp;'.get_string('assessable', 'outcome'));
         $mform->addHelpButton('outcome_assessable', 'assessable', 'outcome');
 
-        $mform->addElement('html', html_writer::tag('div', get_string('err_required', 'form'),
-            array('class' => 'error', 'data-errorcode' => 'descriptionRequired')));
+        $mform->addElement('html', html_writer::tag('div', get_string('outcomedescriptionrequired', 'outcome'),
+            array('class' => 'error', 'data-errorcode' => 'outcomedescriptionrequired')));
         $mform->addElement('textarea', 'outcome_description',
             get_string('description', 'outcome'), array('rows' => '5', 'cols' => '40'));
         $mform->setType('outcome_description', PARAM_TEXT);

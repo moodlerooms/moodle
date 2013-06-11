@@ -20,6 +20,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
         LINK_FOLDER = "span[data-action=folder]",
         INPUT_HIDDEN = 'input[type=hidden]',
         INPUT_ID = '#outcome_id',
+        INPUT_SET_ID = 'input[name=id]',
         INPUT_PARENTID = '#outcome_parentid',
         INPUT_DOCNUM = 'input[name=outcome_docnum]',
         INPUT_IDNUMBER = 'input[name=outcome_idnumber]',
@@ -56,14 +57,14 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
             '{{#if leaf}}{{className "leaf"}}{{/if}}' +
             '"' +
             '{{#if children}} data-action="folder" role="button"{{/if}}' +
-            '>{{docnum}} {{description}}</span> ' +
+            '>{{{docnum}}} {{{description}}}</span> ' +
             '<span class="' +
             '{{className "actions"}}' +
             '">' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="add" tabindex="-1" title="' + '{{title "addchildoutcome" description}}' + '">' + M.str.outcome.add + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="edit" tabindex="-1" title="' + '{{title "editx" description}}' + '">' + M.str.outcome.edit + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="move" tabindex="-1" title="' + '{{title "movex" description}}' + '">' + M.str.outcome.move + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1" title="' + '{{title "deletex" description}}' + '">' + M.str.outcome.delete + '</a>' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="add" tabindex="-1" title="' + '{{{title "addchildoutcome" description}}}' + '">' + M.str.outcome.add + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="edit" tabindex="-1" title="' + '{{{title "editx" description}}}' + '">' + M.str.outcome.edit + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="move" tabindex="-1" title="' + '{{{title "movex" description}}}' + '">' + M.str.outcome.move + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1" title="' + '{{{title "deletex" description}}}' + '">' + M.str.outcome.delete + '</a>' +
             '</span>' +
             '</span>' +
             '{{#if opened}}' +
@@ -230,7 +231,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 var srcNode  = this.get(PANEL_MOVE).get(SRC_NODE);
 
                 // Populate label
-                srcNode.one(LABEL_FORM).set('text', M.util.get_string('movex', 'outcome', OUTCOME_MOVE.get('description')));
+                srcNode.one(LABEL_FORM).set('text', M.util.get_string('movex', 'outcome', OUTCOME_MOVE.get_short_description()));
                 // Reset placement drop down to 'child' option
                 srcNode.one(INPUT_PLACEMENT).set('value', 'child');
                 // Populate outcome list options - remove self and any children
@@ -243,7 +244,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                     select.appendChild(
                         Y.Node.create('<option></option>').
                         set('value', model.get('id')).
-                        setContent(this._menu_prefix(model) + Y.Escape.html(model.get('description')))
+                        setContent(this._menu_prefix(model) + Y.Escape.html(model.get_short_description()))
                     );
                 }, this);
 
@@ -304,12 +305,12 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
 
                 Y.one(INPUT_ID).set('value', id);
                 Y.one(INPUT_PARENTID).set('value', outcome.get('parentid'));
-                srcNode.one(INPUT_IDNUMBER).set('value', nullToStr(outcome.get('idnumber')));
-                srcNode.one(INPUT_DOCNUM).set('value', nullToStr(outcome.get('docnum')));
-                srcNode.one(INPUT_SUBJECTS).set('value', outcome.get('subjects').join(', '));
-                srcNode.one(INPUT_EDULEVELS).set('value', outcome.get('edulevels').join(', '));
+                srcNode.one(INPUT_IDNUMBER).set('value', nullToStr(outcome.get('rawidnumber')));
+                srcNode.one(INPUT_DOCNUM).set('value', nullToStr(outcome.get('rawdocnum')));
+                srcNode.one(INPUT_SUBJECTS).set('value', outcome.get('rawsubjects').join(', '));
+                srcNode.one(INPUT_EDULEVELS).set('value', outcome.get('rawedulevels').join(', '));
                 srcNode.one(INPUT_ASSESSABLE).set('checked', outcome.get('assessable'));
-                srcNode.one(INPUT_DESCRIPTION).set('value', nullToStr(outcome.get('description')));
+                srcNode.one(INPUT_DESCRIPTION).set('value', nullToStr(outcome.get('rawdescription')));
 
                 this._clear_panel_errors(this.get(PANEL_EDIT));
             },
@@ -324,21 +325,20 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
 
                 var srcNode = this.get(PANEL_EDIT).get(SRC_NODE),
                     id = Y.one(INPUT_ID).get('value'),
-                    outcomeList = this.get(OUTCOME_LIST),
-                    outcome;
+                    outcomeList = this.get(OUTCOME_LIST);
 
-                if (id == 0) {
-                    outcome = new M.core_outcome.OutcomeModel();
-                } else {
-                    outcome = this.get(OUTCOME_LIST).getById(id);
+                var outcome = new M.core_outcome.OutcomeModel();
+                if (id != 0) {
+                    outcome.setAttrs(this.get(OUTCOME_LIST).getById(id).toJSON());
                 }
                 var changes = {
                     parentid: Y.one(INPUT_PARENTID).get('value'),
-                    idnumber: srcNode.one(INPUT_IDNUMBER).get('value'),
-                    docnum: srcNode.one(INPUT_DOCNUM).get('value'),
-                    subjects: this._split(srcNode.one(INPUT_SUBJECTS).get('value')),
-                    edulevels: this._split(srcNode.one(INPUT_EDULEVELS).get('value')),
-                    description: srcNode.one(INPUT_DESCRIPTION).get('value')
+                    outcomesetid: Y.one(INPUT_SET_ID).get('value'),
+                    rawidnumber: srcNode.one(INPUT_IDNUMBER).get('value'),
+                    rawdocnum: srcNode.one(INPUT_DOCNUM).get('value'),
+                    rawsubjects: this._split(srcNode.one(INPUT_SUBJECTS).get('value')),
+                    rawedulevels: this._split(srcNode.one(INPUT_EDULEVELS).get('value')),
+                    rawdescription: srcNode.one(INPUT_DESCRIPTION).get('value')
                 };
 
                 if (srcNode.one(INPUT_ASSESSABLE).get('checked')) {
@@ -346,24 +346,21 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 } else {
                     changes.assessable = 0;
                 }
-                // We set all at once so we can undo!
                 outcome.setAttrs(changes);
-
-                var that = this;
-                outcome.validate(outcome.getAttrs(), function(errors) {
+                outcome.validate_and_update(function(errors) {
                     // Ensure that no other outcome on the client side has the same idnumber
                     outcomeList.some(function(model) {
                         if (model.get('idnumber') === outcome.get('idnumber') && model.get('id') !== outcome.get('id')) {
                             if (!Lang.isArray(errors)) {
                                 errors = [];
                             }
-                            errors.push('idnumberNotUnique');
+                            errors.push('outcomeidnumbernotunique');
                             return true;
                         }
                         return false;
                     });
-                    that._handle_edit_panel_validation(outcome, errors);
-                });
+                    this._handle_edit_panel_validation(outcome, errors);
+                }, this);
             },
 
             /**
@@ -375,7 +372,6 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
              */
             _handle_edit_panel_validation: function(outcome, errors) {
                 if (Lang.isArray(errors)) {
-                    outcome.undo();
                     this._clear_panel_errors(this.get(PANEL_EDIT));
                     Y.Array.each(errors, function(errorCode) {
                         this.get(PANEL_EDIT).get(SRC_NODE).one('div[data-errorcode=' + errorCode + ']').show();
@@ -476,7 +472,9 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
              * @returns {Y.Panel}
              */
             _create_move_panel: function() {
-                return this._create_panel(PANEL_MOVE_SRC_NODE, M.str.outcome.moveoutcome, this._handle_move_panel_save);
+                var panel = this._create_panel(PANEL_MOVE_SRC_NODE, M.str.outcome.moveoutcome, this._handle_move_panel_save);
+                panel.set('width', '750px');
+                return panel;
             },
 
             /**

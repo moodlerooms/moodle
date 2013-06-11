@@ -22,7 +22,7 @@
  * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
- * @uathor    Sam Chaffee
+ * @author    Sam Chaffee
  */
 
 defined('MOODLE_INTERNAL') || die();
@@ -83,6 +83,7 @@ class outcome_table_course_performance extends table_sql {
     protected function generate_sql(outcome_form_course_performance_filter $mform, completion_info $completion) {
         global $COURSE;
 
+        $params = array();
         $fields = array('o.id', 'o.docnum', 'o.description',
             '((SUM(a.rawgrade) - SUM(a.mingrade)) / (SUM(a.maxgrade) - SUM(a.mingrade)) * 100) avegrade',
             'MIN(gi.gradetype) scales', 'COUNT(DISTINCT cmscale.id) activities');
@@ -94,7 +95,12 @@ class outcome_table_course_performance extends table_sql {
             'outcomesetid' => $mform->get_cached_value('outcomesetid'),
             'courseid'     => $COURSE->id,
         ));
-        list($filtersql, $params) = $outcomerepo->filter_to_sql($filter);
+        list($filtersql, $filterparams) = $outcomerepo->filter_to_sql($filter);
+
+        // Filter down to assessable outcomes.
+        $filtersql->where .= ' AND o.deleted = :deleted AND o.assessable = :assessable';
+        $filterparams['deleted']    = 0;
+        $filterparams['assessable'] = 1;
 
         list($enrolledsql, $enrolledparams) = $this->reporthelper->get_gradebook_users_sql($this->groupid);
 
@@ -105,7 +111,7 @@ class outcome_table_course_performance extends table_sql {
                 ' / COUNT(cmcomp.id)) * 100) completion';
             $completionsql = 'LEFT OUTER JOIN {course_modules} cmcomp ON cmcomp.id = used.cmid '.
                 'AND cmcomp.completion > :completionenabled AND areas.area = :completionarea '.
-                'LEFT OUTER JOIN {course_modules_completion} comp ON cmcomp.id = comp.coursemoduleid AND comp.userid = a.userid';
+                'LEFT OUTER JOIN {course_modules_completion} comp ON cmcomp.id = comp.coursemoduleid AND comp.userid = u.id';
 
             $params['completioncomplete'] = COMPLETION_COMPLETE;
             $params['completionenabled'] = 0;
@@ -121,7 +127,8 @@ class outcome_table_course_performance extends table_sql {
          LEFT OUTER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
          LEFT OUTER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
          LEFT OUTER JOIN ({outcome_used_areas} used INNER JOIN
-                          {course_modules} acm ON used.cmid = acm.id AND acm.course = :courseid
+                          {course_modules} acm ON used.cmid = acm.id AND acm.course = :courseid INNER JOIN
+                          {modules} amods ON amods.id = acm.module AND amods.visible = :modvisible
                          ) ON areas.id = used.outcomeareaid
          LEFT OUTER JOIN (
                           {outcome_attempts} a INNER JOIN (
@@ -141,19 +148,16 @@ class outcome_table_course_performance extends table_sql {
          $completionsql
         ";
 
-        $where = "$filtersql->where AND o.deleted = :deleted AND o.assessable = :assessable GROUP BY o.id";
+        $params['courseid']   = $COURSE->id;
+        $params['modvisible'] = 1;
+        $params['itemtype']   = 'mod';
+        $params['itemnumber'] = 0;
+        $params['gradetype']  = GRADE_TYPE_SCALE;
 
-        $params['courseid']      = $COURSE->id;
-        $params['deleted']       = 0;
-        $params['assessable']    = 1;
-        $params['itemtype']      = 'mod';
-        $params['itemnumber']    = 0;
-        $params['gradetype']     = GRADE_TYPE_SCALE;
+        $params = array_merge($params, $enrolledparams, $filterparams);
 
-        $params = array_merge($params, $enrolledparams);
-
-        $this->set_sql(implode(', ', $fields), $from, $where, $params);
-        $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM $from WHERE $where) count", $params);
+        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", $params);
+        $this->set_count_sql("SELECT COUNT(1) FROM {outcome} o $filtersql->join WHERE $filtersql->where", $filterparams);
     }
 
     /**

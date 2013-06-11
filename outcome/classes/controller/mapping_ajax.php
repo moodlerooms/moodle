@@ -37,6 +37,11 @@ require_once(__DIR__.'/abstract.php');
  */
 class outcome_controller_mapping_ajax extends outcome_controller_abstract {
     /**
+     * @var outcome_normalizer
+     */
+    public $normalizer;
+
+    /**
      * @var outcome_model_outcome_repository
      */
     public $outcomes;
@@ -54,10 +59,12 @@ class outcome_controller_mapping_ajax extends outcome_controller_abstract {
     public function init($action) {
         parent::init($action);
 
+        require_once(dirname(__DIR__).'/normalizer.php');
         require_once(dirname(__DIR__).'/model/filter_repository.php');
         require_once(dirname(__DIR__).'/model/outcome_repository.php');
         require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
 
+        $this->normalizer  = new outcome_normalizer();
         $this->filters     = new outcome_model_filter_repository();
         $this->outcomes    = new outcome_model_outcome_repository();
         $this->outcomesets = new outcome_model_outcome_set_repository();
@@ -119,12 +126,12 @@ class outcome_controller_mapping_ajax extends outcome_controller_abstract {
             return json_encode(array());
         }
         $result = array(array(
-            'id' => 0,
+            'id'   => 0,
             'name' => get_string('chooseoutcomeset', 'outcome'),
         ));
         foreach ($outcomesets as $outcomeset) {
             $result[] = array(
-                'id' => $outcomeset->id,
+                'id'   => $outcomeset->id,
                 'name' => format_string($outcomeset->name),
             );
         }
@@ -140,13 +147,17 @@ class outcome_controller_mapping_ajax extends outcome_controller_abstract {
     public function get_outcome_set_filter_menus_action() {
 
         $outcomesetid = required_param('outcomesetid', PARAM_INT);
+        $outcomeset   = $this->outcomesets->find($outcomesetid, MUST_EXIST);
 
-        $outcomeset = $this->outcomesets->find($outcomesetid, MUST_EXIST);
+        $metadata = array('edulevels' => array(), 'subjects' => array());
+        foreach (array_keys($metadata) as $metaname) {
+            $values = $this->outcomesets->fetch_metadata_values($outcomeset, $metaname);
+            foreach ($values as $value) {
+                $metadata[$metaname][] = array('rawname' => $value, 'name' => format_string($value));
+            }
+        }
 
-        return json_encode(array(
-            'edulevels' => $this->outcomesets->fetch_metadata_values($outcomeset, 'edulevels'),
-            'subjects' => $this->outcomesets->fetch_metadata_values($outcomeset, 'subjects'),
-        ));
+        return json_encode(array('edulevels' => $metadata['edulevels'], 'subjects' => $metadata['subjects']));
     }
 
     /**
@@ -177,8 +188,8 @@ class outcome_controller_mapping_ajax extends outcome_controller_abstract {
         }
 
         return json_encode(array(
-            'outcomeSetList' => array_values($outcomesets),
-            'outcomeList' => array_values($outcomes),
+            'outcomeSetList' => $this->normalizer->normalize_outcome_sets($outcomesets),
+            'outcomeList'    => $this->normalizer->normalize_outcomes($outcomes),
         ));
     }
 }

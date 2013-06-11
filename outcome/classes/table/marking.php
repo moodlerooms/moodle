@@ -76,6 +76,7 @@ class outcome_table_marking extends table_sql {
     protected function generate_sql(outcome_form_marking_filter $mform, completion_info $completion) {
         global $COURSE;
 
+        $params = array();
         $fields = array('o.id', 'o.docnum', 'o.description',
             '((SUM(a.rawgrade) - SUM(a.mingrade)) / (SUM(a.maxgrade) - SUM(a.mingrade)) * 100) avegrade',
             'MIN(gi.gradetype) scales', 'm.id markid', 'm.result markresult');
@@ -87,7 +88,12 @@ class outcome_table_marking extends table_sql {
             'outcomesetid' => $mform->get_cached_value('outcomesetid'),
             'courseid'     => $COURSE->id,
         ));
-        list($filtersql, $params) = $outcomerepo->filter_to_sql($filter);
+        list($filtersql, $filterparams) = $outcomerepo->filter_to_sql($filter);
+
+        // Filter down to assessable outcomes.
+        $filtersql->where .= ' AND o.deleted = :deleted AND o.assessable = :assessable';
+        $filterparams['deleted']    = 0;
+        $filterparams['assessable'] = 1;
 
         if ($completion->is_enabled()) {
             // This field is number of completed activities divided by total number of activities that can be completed.
@@ -114,7 +120,8 @@ class outcome_table_marking extends table_sql {
          LEFT OUTER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
          LEFT OUTER JOIN {outcome_areas} areas ON areas.id = ao.outcomeareaid
          LEFT OUTER JOIN ({outcome_used_areas} used INNER JOIN
-                          {course_modules} acm ON used.cmid = acm.id AND acm.course = :courseid2
+                          {course_modules} acm ON used.cmid = acm.id AND acm.course = :courseid2 INNER JOIN
+                          {modules} amods ON amods.id = acm.module AND amods.visible = :modvisible
                           ) ON areas.id = used.outcomeareaid
          LEFT OUTER JOIN (
                           {outcome_attempts} a INNER JOIN (
@@ -134,20 +141,17 @@ class outcome_table_marking extends table_sql {
          $completionsql
         ";
 
-        $where = "$filtersql->where AND o.deleted = :deleted AND o.assessable = :assessable GROUP BY o.id";
-
         $params['courseid']      = $COURSE->id;
         $params['courseid2']     = $COURSE->id;
+        $params['modvisible']    = 1;
         $params['markuserid']    = $this->userid;
         $params['attemptuserid'] = $this->userid;
-        $params['deleted']       = 0;
-        $params['assessable']    = 1;
         $params['itemtype']      = 'mod';
         $params['itemnumber']    = 0;
         $params['gradetype']     = GRADE_TYPE_SCALE;
 
-        $this->set_sql(implode(', ', $fields), $from, $where, $params);
-        $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM $from WHERE $where) count", $params);
+        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", array_merge($params, $filterparams));
+        $this->set_count_sql("SELECT COUNT(1) FROM {outcome} o $filtersql->join WHERE $filtersql->where", $filterparams);
     }
 
     /**

@@ -47,9 +47,10 @@ class outcomesupport_mod_coverage extends outcome_coverage_abstract {
         $unmapped = $DB->get_records_sql("
             SELECT cm.id
               FROM {course_modules} cm
+        INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = :modvisible
          LEFT JOIN {outcome_used_areas} used ON used.cmid = cm.id
              WHERE cm.course = :courseid AND used.id IS NULL",
-        array('courseid' => $this->courseid));
+        array('courseid' => $this->courseid, 'modvisible' => 1));
 
         $table        = new html_table();
         $table->head  = array(get_string('section'), get_string('title', 'outcome'), '');

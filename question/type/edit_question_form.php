@@ -203,7 +203,7 @@ abstract class question_edit_form extends question_wizard_form {
         // Any questiontype specific fields.
         $this->definition_inner($mform);
 
-        if (!empty($CFG->core_outcome_enable)) {
+        if (!empty($CFG->core_outcome_enable) and question_bank::get_qtype($this->qtype())->is_real_question_type()) {
             $mform->addElement('header', 'outcomesheader', get_string('outcomes', 'outcome'));
             $mform->addElement('mapoutcome', 'outcomes');
             $mform->addHelpButton('outcomes', 'selectoutcomes', 'outcome');

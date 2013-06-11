@@ -67,7 +67,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
             case 'course_coverage_activities':
             case 'course_coverage_questions':
             case 'course_performance_associated_content':
-                require_capability('moodle/outcome:edit', $PAGE->context);
+                require_capability('moodle/grade:edit', $PAGE->context);
                 break;
             default:
                 throw new coding_exception("Missing capability check for $action action");

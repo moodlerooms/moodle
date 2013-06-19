@@ -80,4 +80,13 @@ class outcome_model_mark_history_repository extends outcome_model_abstract_repos
         $model->timecreated = time();
         $model->id = $this->db->insert_record($this->table, $model);
     }
+
+    /**
+     * Removes history records that are OLDER than the passed timestamp
+     *
+     * @param int $time
+     */
+    public function remove_old($time) {
+        $this->db->delete_records_select($this->table, 'timecreated < ?', array($time));
+    }
 }

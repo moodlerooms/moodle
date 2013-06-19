@@ -96,8 +96,8 @@ class outcome_model_outcome_repository_test extends advanced_testcase {
         $repo = new outcome_model_outcome_repository();
         $result = $repo->filter_to_sql($filter);
 
-        $expected = array('filteroutcomesetid' => $filter->outcomesetid);
-        $this->assertEquals($expected, $result[1], 'Should just filter by outcome set ID');
+        $this->assertEquals($filter->outcomesetid, reset($result[1]), 'Should just filter by outcome set ID');
+        $this->assertEquals(1, count($result[1]));
     }
 
     public function test_find() {

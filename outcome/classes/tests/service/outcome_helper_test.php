@@ -75,7 +75,7 @@ class outcome_service_outcome_helper_test extends advanced_testcase {
     }
 
     /**
-     * @expectedException coding_exception
+     * @expectedException moodle_exception
      */
     public function test_clean_and_validate_no_desc() {
         $dirty               = new outcome_model_outcome();
@@ -88,7 +88,7 @@ class outcome_service_outcome_helper_test extends advanced_testcase {
     }
 
     /**
-     * @expectedException coding_exception
+     * @expectedException moodle_exception
      */
     public function test_clean_and_validate_no_set_id() {
         $dirty               = new outcome_model_outcome();
@@ -101,7 +101,7 @@ class outcome_service_outcome_helper_test extends advanced_testcase {
     }
 
     /**
-     * @expectedException coding_exception
+     * @expectedException moodle_exception
      */
     public function test_clean_and_validate_no_idnumber() {
         $dirty               = new outcome_model_outcome();
@@ -114,7 +114,7 @@ class outcome_service_outcome_helper_test extends advanced_testcase {
     }
 
     /**
-     * @expectedException coding_exception
+     * @expectedException moodle_exception
      */
     public function test_clean_and_validate_no_idnumber2() {
         $dirty               = new outcome_model_outcome();

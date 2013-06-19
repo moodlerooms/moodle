@@ -37,6 +37,11 @@ require_once(__DIR__.'/abstract.php');
  */
 class outcome_controller_report extends outcome_controller_abstract {
     /**
+     * @var outcome_service_award
+     */
+    protected $awardservice;
+
+    /**
      * @var outcome_service_mark_helper
      */
     protected $markhelper;
@@ -74,11 +79,13 @@ class outcome_controller_report extends outcome_controller_abstract {
     public function init($action) {
         parent::init($action);
 
+        require_once(dirname(__DIR__).'/service/award.php');
         require_once(dirname(__DIR__).'/service/mark_helper.php');
         require_once(dirname(__DIR__).'/service/report_helper.php');
 
+        $this->awardservice = new outcome_service_award();
         $this->reporthelper = new outcome_service_report_helper();
-        $this->markhelper = new outcome_service_mark_helper();
+        $this->markhelper   = new outcome_service_mark_helper();
     }
 
     /**
@@ -131,9 +138,14 @@ class outcome_controller_report extends outcome_controller_abstract {
             $earnedmarkids = optional_param_array('earnedmarkids', array(), PARAM_INT);
             $userid        = $mform->get_cached_value('userid');
 
-            $this->markhelper->mark_outcomes_as_earned($COURSE->id, $USER->id, $userid, $outcomeids);
-            $this->markhelper->update_mark_earned($USER->id, $markids, $earnedmarkids);
-
+            $updated = array_merge(
+                $this->markhelper->mark_outcomes_as_earned($COURSE->id, $USER->id, $userid, $outcomeids),
+                $this->markhelper->update_mark_earned($USER->id, $markids, $earnedmarkids)
+            );
+            $errors = $this->awardservice->update_awards_by_marks($updated);
+            foreach ($errors as $error) {
+                $this->flashmessages->add_string($error);
+            }
             $this->flashmessages->good('changessaved', null, 'moodle');
             redirect($this->new_url());
         }
@@ -141,6 +153,9 @@ class outcome_controller_report extends outcome_controller_abstract {
         $table = new outcome_table_marking($mform);
         $table->define_baseurl($this->new_url());
 
+        if ($this->reporthelper->download_report($table)) {
+            return;
+        }
         echo $OUTPUT->heading(get_string('report:marking', 'outcome'));
         $this->renderer->outcome_marking($mform, $table);
     }
@@ -170,6 +185,9 @@ class outcome_controller_report extends outcome_controller_abstract {
         $table = new outcome_table_course_performance($mform, $this->reporthelper);
         $table->define_baseurl($this->new_url());
 
+        if ($this->reporthelper->download_report($table)) {
+            return;
+        }
         echo $OUTPUT->heading(get_string('report:course_performance', 'outcome'));
         $this->renderer->outcome_course_performance($mform, $table);
     }
@@ -199,6 +217,9 @@ class outcome_controller_report extends outcome_controller_abstract {
         $table = new outcome_table_course_coverage($mform, $this->reporthelper);
         $table->define_baseurl($this->new_url());
 
+        if ($this->reporthelper->download_report($table)) {
+            return;
+        }
         echo $OUTPUT->heading(get_string('report:course_coverage', 'outcome'));
         $this->renderer->outcome_course_coverage($mform, $table);
     }

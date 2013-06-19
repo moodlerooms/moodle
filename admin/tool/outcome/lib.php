@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version info
+ * Plugin library
  *
  * @package   core_outcome
  * @category  outcome
@@ -26,6 +26,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2013031814; // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2012112900; // Requires this Moodle version
-$plugin->component = 'tool_outcome'; // Full name of the plugin (used for diagnostics)
+function tool_outcome_cron() {
+    global $CFG;
+
+    require_once($CFG->dirroot.'/outcome/lib.php');
+
+    outcome_mark()->clean_history();
+}

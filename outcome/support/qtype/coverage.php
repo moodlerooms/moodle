@@ -42,16 +42,28 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
         return get_string('unmappedquestions', 'outcome');
     }
 
-    public function get_unmapped_content() {
-        global $DB, $PAGE;
+    protected function question_context_sql() {
+        global $DB;
 
-        $componentlike = $DB->sql_like('area.component', ':component');
         $coursecontext = context_course::instance($this->courseid);
         $childcontexts = $coursecontext->get_child_contexts();
         $qcontexts     = array_merge(array($coursecontext->id), array_keys($childcontexts));
 
-        list($contextinsql, $contextinparams) = $DB->get_in_or_equal($qcontexts, SQL_PARAMS_NAMED);
-        $params = array_merge(array('courseid' => $this->courseid, 'component' => 'qtype_%'), $contextinparams);
+        return $DB->get_in_or_equal($qcontexts, SQL_PARAMS_NAMED);
+    }
+
+    /**
+     * Get a list of questions are not mapped
+     * to any mappable outcomes.
+     *
+     * @return array
+     */
+    protected function get_unmapped_questions() {
+        global $DB;
+
+        $componentlike = $DB->sql_like('area.component', ':component');
+        list($contextinsql, $params) = $this->question_context_sql();
+        $params['component'] = 'qtype_%';
 
         $unmapped = $DB->get_records_sql("
             SELECT q.id, q.name, COUNT(quiz.id) quizcount
@@ -63,19 +75,64 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
              WHERE qc.contextid $contextinsql AND area.id IS NULL
           GROUP BY q.id", $params);
 
+        return $this->add_invalid_mapped_questions($unmapped);
+    }
+
+    /**
+     * This adds questions that are mapped to outcomes, but
+     * those outcomes are not associated to the course.
+     *
+     * @param array $unmapped
+     * @return array
+     */
+    protected function add_invalid_mapped_questions($unmapped) {
+        global $DB;
+
+        $outcomesql = $this->course_outcomes_sql();
+        if (empty($outcomesql)) {
+            return $unmapped;
+        }
+        list($sql, $params) = $outcomesql;
+        $componentlike = $DB->sql_like('area.component', ':component');
+        list($contextinsql, $contextinparams) = $this->question_context_sql();
+
+        $params = array_merge(array('component' => 'qtype_%'), $contextinparams, $params);
+
+        $mapinfos = $DB->get_records_sql("
+            SELECT q.id, q.name, COUNT(outcomes.id) valid, COUNT(quiz.id) quizcount
+              FROM {question} q
+        INNER JOIN {question_categories} qc ON qc.id = q.category
+        INNER JOIN {outcome_areas} area ON $componentlike AND area.itemid = q.id
+        INNER JOIN {outcome_area_outcomes} ao ON area.id = ao.outcomeareaid
+         LEFT JOIN {quiz_question_instances} qqi ON qqi.question = q.id
+         LEFT JOIN {quiz} quiz ON quiz.id = qqi.quiz
+         LEFT JOIN ($sql) outcomes ON outcomes.id = ao.outcomeid
+             WHERE qc.contextid $contextinsql
+          GROUP BY q.id", $params);
+
+        foreach ($mapinfos as $mapinfo) {
+            if (empty($mapinfo->valid) and !array_key_exists($mapinfo->id, $unmapped)) {
+                $unmapped[$mapinfo->id] = $mapinfo;
+            }
+        }
+        return $unmapped;
+    }
+
+    public function get_unmapped_content() {
+        global $PAGE;
+
         $table        = new html_table();
         $table->head  = array(get_string('question'), get_string('quizzes', 'outcome'), '');
+        $table->data  = array();
         $table->attributes['class'] = 'generaltable outcome-unmapped-questions';
 
-        $rows = array();
+        $unmapped = $this->get_unmapped_questions();
         foreach ($unmapped as $question) {
             $returnurl = $PAGE->url->out_as_local_url();
             $maplink = html_writer::link(new moodle_url('/question/question.php', array('courseid' => $this->courseid,
                     'id' => $question->id, 'returnurl' => $returnurl)), get_string('map', 'outcome'));
-            $rows[] = new html_table_row(array(format_text($question->name), $question->quizcount, $maplink));
+            $table->data[] = new html_table_row(array(format_text($question->name), $question->quizcount, $maplink));
         }
-
-        $table->data = $rows;
         return $table;
     }
 }

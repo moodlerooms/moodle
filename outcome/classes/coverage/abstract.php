@@ -56,4 +56,35 @@ abstract class outcome_coverage_abstract implements outcome_coverage_interface {
     public function get_courseid() {
         return $this->courseid;
     }
+
+    /**
+     * Get SQL that gets all mappable outcomes
+     *
+     * @return array|bool
+     */
+    public function course_outcomes_sql() {
+
+        require_once(dirname(dirname(__DIR__)).'/classes/model/outcome_repository.php');
+        require_once(dirname(dirname(__DIR__)).'/classes/model/filter_repository.php');
+
+        $outcomerepo = new outcome_model_outcome_repository();
+        $filterrepo  = new outcome_model_filter_repository();
+
+        $filters = $filterrepo->find_by_course($this->courseid);
+
+        if (empty($filters)) {
+            return false;
+        }
+        $params  = array();
+        $queries = array();
+        foreach ($filters as $filter) {
+            list($filtersql, $filterparams) = $outcomerepo->filter_to_sql($filter, true);
+
+            $queries[] = "SELECT o.id FROM {outcome} o $filtersql->join WHERE $filtersql->where $filtersql->groupby";
+            $params    = array_merge($params, $filterparams);
+        }
+        $sql = '('.implode(') UNION (', $queries).')';
+
+        return array($sql, $params);
+    }
 }

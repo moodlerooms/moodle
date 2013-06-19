@@ -76,6 +76,7 @@ class outcome_service_mapper {
      * @param outcome_model_outcome_set_repository $outcomesets
      * @param outcome_model_filter_repository $filters
      * @param outcome_model_area_repository $areas
+     * @param outcome_normalizer $normalizer
      */
     public function __construct(outcome_model_outcome_repository $outcomes = null,
                                  outcome_model_outcome_set_repository $outcomesets = null,

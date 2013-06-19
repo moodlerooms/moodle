@@ -62,6 +62,7 @@ YUI.add('moodle-core_outcome-dynamicpanel', function(Y) {
                     this.get(PANEL).set('headerContent', response.header);
                     this.get(PANEL).set('bodyContent', response.body);
                     this.get(PANEL).show();
+                    this.get(PANEL).centered();
                 }, this);
             },
 

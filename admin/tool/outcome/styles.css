@@ -96,18 +96,37 @@ tr.outcome-activity-content-attempt .c0, .outcome-sub-content .c0 {
     margin: 5px 0;
 }
 
+.yui3-core_outcome_outcomepanel-outcomeset,
+.yui3-core_outcome_editoutcome-outcome {
+    margin: 5px 0;
+    padding: 3px 0 2px 20px;
+    background-repeat: no-repeat;
+}
+
 .yui3-core_outcome_editoutcome-folder-closed,
 .yui3-core_outcome_outcomepanel-outcomeset {
-    background: url([[pix:moodle|f/folder]]) no-repeat;
-    margin: 5px 0;
-    padding-left: 20px;
+    background-image: url([[pix:tool_outcome|outcome-folder]]);
 }
 
 .yui3-core_outcome_editoutcome-folder-opened,
 .yui3-core_outcome_outcomepanel-outcomeset.expanded {
-    background: url([[pix:moodle|f/folder-open]]) no-repeat;
-    margin: 5px 0;
-    padding-left: 20px;
+    background-image: url([[pix:tool_outcome|outcome-folder-open]]);
+}
+
+.yui3-core_outcome_editoutcome-assessable.yui3-core_outcome_editoutcome-folder-closed {
+    background-image: url([[pix:tool_outcome|outcome-folder-assessable]]);
+}
+
+.yui3-core_outcome_editoutcome-assessable.yui3-core_outcome_editoutcome-folder-opened {
+    background-image: url([[pix:tool_outcome|outcome-folder-open-assessable]]);
+}
+
+.yui3-core_outcome_editoutcome-leaf {
+    background-image: url([[pix:tool_outcome|outcome]]);
+}
+
+.yui3-core_outcome_editoutcome-assessable.yui3-core_outcome_editoutcome-leaf {
+    background-image: url([[pix:tool_outcome|outcome-assessable]]);
 }
 
 .yui3-core_outcome_outcomepanel-outcomeset.selectedparent {

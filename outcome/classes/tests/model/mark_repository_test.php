@@ -44,7 +44,7 @@ class outcome_model_mark_repository_test extends advanced_testcase {
     public function setUp() {
         $this->resetAfterTest();
 
-        $data = include(dirname(__DIR__).'/fixtures/base.php');
+        $data = include(dirname(__DIR__).'/fixtures/mark.php');
         $this->loadDataSet($this->createArrayDataSet($data));
         $this->_model = $this->_expected_model($data['outcome_marks'][0]);
     }
@@ -70,7 +70,7 @@ class outcome_model_mark_repository_test extends advanced_testcase {
 
     public function test_find_by() {
         $repo  = new outcome_model_mark_repository();
-        $found = $repo->find_by(array('userid' => '1'));
+        $found = $repo->find_by(array('courseid' => '2'));
         $this->assertEquals(array('1' => $this->_model), $found);
     }
 
@@ -78,6 +78,33 @@ class outcome_model_mark_repository_test extends advanced_testcase {
         $repo  = new outcome_model_mark_repository();
         $found = $repo->find_by_ids(array('1'));
         $this->assertEquals(array('1' => $this->_model), $found);
+    }
+
+    public function test_has_ever_been_earned_by_model() {
+        $repo = new outcome_model_mark_repository();
+        $this->assertTrue($repo->has_ever_been_earned($this->_model));
+    }
+
+    public function test_has_ever_been_earned_in_diff_course() {
+        $this->_model->result = outcome_model_mark::NOT_EARNED;
+        $repo = new outcome_model_mark_repository();
+        $this->assertTrue($repo->has_ever_been_earned($this->_model));
+    }
+
+    public function test_has_ever_been_earned_in_history() {
+        $this->_model->outcomeid = 5;
+        $this->_model->result    = outcome_model_mark::NOT_EARNED;
+
+        $repo = new outcome_model_mark_repository();
+        $this->assertTrue($repo->has_ever_been_earned($this->_model));
+    }
+
+    public function test_has_ever_been_earned_not_in_history() {
+        $this->_model->outcomeid = 6;
+        $this->_model->result    = outcome_model_mark::NOT_EARNED;
+
+        $repo = new outcome_model_mark_repository();
+        $this->assertFalse($repo->has_ever_been_earned($this->_model));
     }
 
     public function test_save() {
@@ -134,6 +161,19 @@ class outcome_model_mark_repository_test extends advanced_testcase {
         $this->assertFalse($DB->record_exists('outcome_marks', array('id' => $id)));
         $this->assertTrue($DB->record_exists('outcome_marks_history', array(
             'outcomemarkid' => $id,
+            'action'        => outcome_model_mark_history::ACTION_DELETE
+        )));
+    }
+
+    public function test_remove_by_courseid() {
+        global $DB;
+
+        $repo = new outcome_model_mark_repository();
+        $repo->remove_by_courseid(2);
+
+        $this->assertFalse($DB->record_exists('outcome_marks', array('id' => $this->_model->id)));
+        $this->assertTrue($DB->record_exists('outcome_marks_history', array(
+            'outcomemarkid' => $this->_model->id,
             'action'        => outcome_model_mark_history::ACTION_DELETE
         )));
     }

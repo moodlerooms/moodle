@@ -258,7 +258,7 @@ class core_outcome_renderer extends plugin_renderer_base {
                 get_string('content', 'outcome'),
                 get_string('type', 'outcome'),
                 get_string('grade'),
-                get_string('pointvalue', 'outcome'),
+                get_string('totalpoints', 'outcome'),
             );
             $table->attributes['class'] = 'generaltable outcome-course-activities-attempts';
 

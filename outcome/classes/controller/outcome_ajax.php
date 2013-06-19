@@ -92,7 +92,7 @@ class outcome_controller_outcome_ajax extends outcome_controller_abstract {
         $model = new outcome_model_outcome();
         $this->outcomehelper->map_to_outcome($model, $data);
         $this->outcomehelper->clean_outcome($model);
-        $errors = $this->outcomehelper->validate_outcome($model, false);
+        $errors = $this->outcomehelper->validate_outcome($model, false, false);
 
         if (!empty($errors)) {
             $codes = array();

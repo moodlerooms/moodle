@@ -188,16 +188,17 @@ class outcome_service_outcome_helper {
 
     /**
      * @param outcome_model_outcome $model
+     * @param bool $requiresetid Require outcome set ID - sometimes you don't because the set doesn't exist yet
      * @param bool $throw Little funky, but if true, throws first error found
      * @return moodle_exception[]
      * @throws moodle_exception
      */
-    public function validate_outcome(outcome_model_outcome $model, $throw = true) {
+    public function validate_outcome(outcome_model_outcome $model, $requiresetid = true, $throw = true) {
         $errors = array();
         if ($model->description === '') {
             $errors[] = new moodle_exception('outcomedescriptionrequired', 'outcome');
         }
-        if (empty($model->outcomesetid)) {
+        if ($requiresetid and empty($model->outcomesetid)) {
             $errors[] = new moodle_exception('outcomesetidrequired', 'outcome');
         }
         if ($model->idnumber === '') {

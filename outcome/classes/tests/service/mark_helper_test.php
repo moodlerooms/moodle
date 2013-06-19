@@ -78,16 +78,15 @@ class outcome_service_mark_helper_test extends basic_testcase {
         $service->mark_outcome_as_earned('5', '7', '10', $model);
     }
 
+    /**
+     * @expectedException coding_exception
+     */
     public function test_mark_non_assessable_outcome_as_earned() {
         $model = new outcome_model_outcome();
         $model->id = 1;
         $model->assessable = 0;
 
-        $marksmock = $this->getMock('outcome_model_mark_repository', array('find_one_by', 'save'));
-        $marksmock->expects($this->never())->method('find_one_by');
-        $marksmock->expects($this->never())->method('save');
-
-        $service = new outcome_service_mark_helper($marksmock);
+        $service = new outcome_service_mark_helper();
         $service->mark_outcome_as_earned('5', '7', '10', $model);
     }
 

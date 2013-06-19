@@ -58,6 +58,13 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
+        $mform->addElement('html', html_writer::start_tag('div',
+            array('class' => 'error', 'data-errorcode' => 'outcomesetidnumberchange', 'style' => 'display:none;')));
+
+        $mform->addElement('static', 'outcomesetidnumberchange', '', get_string('uniqueidchangewarning', 'outcome'));
+
+        $mform->addElement('html', html_writer::end_tag('div'));
+
         $mform->addElement('text', 'idnumber', get_string('idnumber', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
         $mform->setType('idnumber', PARAM_TEXT);
         $mform->addRule('idnumber', null, 'required', null, 'client');
@@ -102,6 +109,8 @@ class outcome_form_outcome_set extends moodleform {
             array('class' => 'error', 'data-errorcode' => 'outcomeidnumberrequired')));
         $mform->addElement('html', html_writer::tag('div', get_string('idnumbernotunique', 'outcome'),
             array('class' => 'error', 'data-errorcode' => 'outcomeidnumbernotunique')));
+        $mform->addElement('html', html_writer::tag('div', get_string('uniqueidchangewarning', 'outcome'),
+            array('class' => 'error', 'data-errorcode' => 'outcomeidnumberchange')));
         $mform->addElement('text', 'outcome_idnumber', get_string('idnumber', 'outcome'),
             array('size' => '40', 'maxlength' => '255'));
         $mform->setType('outcome_idnumber', PARAM_TEXT);

@@ -14,18 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Plugin version info
- *
- * @package   core_outcome
- * @category  outcome
- * @copyright Copyright (c) 2013 Moodlerooms Inc. (http://www.moodlerooms.com)
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @author    Mark Nielsen
- */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2013031814; // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2012112900; // Requires this Moodle version
-$plugin->component = 'tool_outcome'; // Full name of the plugin (used for diagnostics)
+return array(
+    'outcome_awards' => array(
+        array('id' => '1', 'outcomeid' => '1', 'userid' => '2', 'timecreated' => '1234567890'),
+    ),
+);

@@ -27,9 +27,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-
-require_once($CFG->libdir.'/tablelib.php');
+require_once(__DIR__.'/abstract.php');
 require_once(dirname(__DIR__).'/form/course_coverage_filter.php');
 require_once(dirname(__DIR__).'/model/outcome_repository.php');
 require_once(dirname(__DIR__).'/model/filter_repository.php');
@@ -42,7 +40,7 @@ require_once(dirname(__DIR__).'/model/filter_repository.php');
  * @author    Mark Nielsen
  * @author    Sam Chaffee
  */
-class outcome_table_course_coverage extends table_sql {
+class outcome_table_course_coverage extends outcome_table_abstract {
     /**
      * @var outcome_service_report_helper
      */
@@ -53,11 +51,18 @@ class outcome_table_course_coverage extends table_sql {
 
         $this->reporthelper = $reporthelper;
 
-        $columns = array('docnum', 'description', 'resources', 'activities', 'questions');
+        $this->init_download(get_string('report:course_coverage', 'outcome'));
 
         $this->set_attribute('id', 'outcome-course-coverage');
         $this->set_attribute('class', 'generaltable generalbox outcome-report-table');
-        $this->define_columns($columns);
+        $this->define_columns(array('docnum', 'description', 'resources', 'activities', 'questions'));
+        $this->define_headers(array(
+            get_string('id', 'outcome'),
+            get_string('outcome', 'outcome'),
+            get_string('resources', 'outcome'),
+            get_string('activities', 'outcome'),
+            get_string('questions', 'outcome'),
+        ));
         $this->sortable(true, 'description');
         $this->collapsible(false);
 
@@ -67,6 +72,7 @@ class outcome_table_course_coverage extends table_sql {
     protected function generate_sql(outcome_form_course_coverage_filter $mform) {
         global $COURSE, $DB;
 
+        $system  = context_system::instance();
         $context = context_course::instance($COURSE->id);
 
         $activitymods = $this->reporthelper->get_mod_archetypes(MOD_ARCHETYPE_OTHER);
@@ -129,9 +135,11 @@ class outcome_table_course_coverage extends table_sql {
                                                      AND $componentlikesql
                 INNER JOIN {question} q ON q.id = areas3.itemid
                 INNER JOIN {question_categories} qc ON qc.id = q.category
-                INNER JOIN {context} ctx ON (ctx.id = qc.contextid AND (ctx.id = :contextid OR $contextlikesql))
+                INNER JOIN {context} ctx ON (ctx.id = qc.contextid
+                                             AND (ctx.id = :contextid OR $contextlikesql OR ctx.id = :systemid1))
                  LEFT JOIN {outcome_used_areas} used3 ON areas3.id = used3.outcomeareaid
                  LEFT JOIN {course_modules} cm3 ON cm3.id = used3.cmid AND cm3.course = :courseid3
+                     WHERE (ctx.id != :systemid2 OR (ctx.id = :systemid3 AND cm3.id IS NOT NULL))
                   GROUP BY o.id
             ) t3
                 ON t3.id = o.id
@@ -142,36 +150,14 @@ class outcome_table_course_coverage extends table_sql {
         $params['typequestion']   = 'qtype';
         $params['contextid']      = $context->id;
         $params['ctxpath']        = $context->path.'/%';
+        $params['systemid1']      = $system->id;
+        $params['systemid2']      = $system->id;
+        $params['systemid3']      = $system->id;
 
         $params = array_merge($params, $activitiesinparmas, $resourcesinparams, $filterparams);
 
         $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", $params);
-        $this->set_count_sql("SELECT COUNT(1) FROM {outcome} o $filtersql->join WHERE $filtersql->where", $filterparams);
-    }
-
-    /**
-     * Based on columns, define default headers
-     *
-     * @param array $columns
-     */
-    function define_columns($columns) {
-        parent::define_columns($columns);
-
-        $allheaders = array(
-            'docnum'      => get_string('id', 'outcome'),
-            'description' => get_string('outcome', 'outcome'),
-            'resources'  => get_string('resources', 'outcome'),
-            'activities'    => get_string('activities', 'outcome'),
-            'questions'      => get_string('questions', 'outcome'),
-        );
-
-        $headers = array();
-        foreach ($columns as $column) {
-            if (array_key_exists($column, $allheaders)) {
-                $headers[] = $allheaders[$column];
-            }
-        }
-        $this->define_headers($headers);
+        $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM {outcome} o $filtersql->join WHERE $filtersql->where $filtersql->groupby) x", $filterparams);
     }
 
     function wrap_html_finish() {
@@ -179,15 +165,8 @@ class outcome_table_course_coverage extends table_sql {
                 array('id' => 'outcome-coverage-notes'));
     }
 
-    protected function panel_link($row, $action, $text) {
-        if ($text == '-') {
-            return $text; // Lame check, but don't link "empty" data.
-        }
-        return html_writer::link('#', $text, array(
-            'class'                  => 'dynamic-panel',
-            'data-request-action'    => $action,
-            'data-request-outcomeid' => $row->id,
-        ));
+    protected function panel_data($row, $action) {
+        return array('data-request-outcomeid' => $row->id);
     }
 
     public function col_docnum($row) {
@@ -199,6 +178,9 @@ class outcome_table_course_coverage extends table_sql {
     }
 
     public function col_resources($row) {
+        if ($this->is_downloading()) {
+            return $row->resources;
+        }
         if (is_null($row->resources)) {
             $row->resources = '-';
         }
@@ -206,6 +188,9 @@ class outcome_table_course_coverage extends table_sql {
     }
 
     public function col_activities($row) {
+        if ($this->is_downloading()) {
+            return $row->activities;
+        }
         if (is_null($row->activities)) {
             $row->activities = '-';
         }
@@ -213,6 +198,9 @@ class outcome_table_course_coverage extends table_sql {
     }
 
     public function col_questions($row) {
+        if ($this->is_downloading()) {
+            return $row->questions;
+        }
         if (is_null($row->questions)) {
             $questions = '-';
         } else {
@@ -222,24 +210,5 @@ class outcome_table_course_coverage extends table_sql {
             }
         }
         return $questions;
-    }
-
-    public function finish_html() {
-        global $PAGE;
-
-        parent::finish_html();
-
-        if ($this->started_output) {
-            $PAGE->requires->yui_module(
-                'moodle-core_outcome-dynamicpanel',
-                'M.core_outcome.init_dynamicpanel',
-                array(array(
-                    'contextId' => $PAGE->context->id,
-                    'delegateSelector' => '#outcome-course-coverage',
-                    'actionSelector' => 'a.dynamic-panel',
-                ))
-            );
-            $PAGE->requires->strings_for_js(array('close'), 'outcome');
-        }
     }
 }

@@ -71,6 +71,25 @@ class outcome_service_report_helper {
     }
 
     /**
+     * Handle the downloading of tables
+     *
+     * @param table_sql $table
+     * @return bool
+     */
+    public function download_report(table_sql $table) {
+        if ($table->is_downloading()) {
+            // Purge output buffers, we don't want any of it.
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            // Note: at time of comment, this exits the script.  Doesn't seem 100% guaranteed though.
+            $table->out(50, false);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * @param int $outcomeid
      * @param int $userid
      * @param int $courseid
@@ -304,8 +323,8 @@ class outcome_service_report_helper {
 
         $rs = $this->db->get_recordset_sql("
             SELECT cm.id cmid, areas.id areaid, areas.component areacomponent, areas.area areaarea, areas.itemid areaitemid,
-                   ((SUM(a.rawgrade) - SUM(a.mingrade)) / (SUM(a.maxgrade) - SUM(a.mingrade)) * 100) avegrade,
-                   AVG(a.rawgrade - a.mingrade) points, AVG(a.maxgrade - a.mingrade) possiblepoints
+                   (SUM(a.rawgrade - a.mingrade) / SUM(a.maxgrade - a.mingrade) * 100) avegrade,
+                   SUM(a.rawgrade - a.mingrade) points, SUM(a.maxgrade - a.mingrade) possiblepoints
               FROM {outcome} o
               $esql
         INNER JOIN {outcome_area_outcomes} ao ON o.id = ao.outcomeid
@@ -416,18 +435,28 @@ class outcome_service_report_helper {
         // Ensure we have course context.
         $context = context_course::instance($PAGE->course->id);
 
-        list($esql, $eparams) = get_enrolled_sql($context, '', $groupid);
         list($gsql, $rparams) = $DB->get_in_or_equal(explode(',', $CFG->gradebookroles), SQL_PARAMS_NAMED, 'grbr');
         list($csql, $cparams) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'ctx');
 
+        $eparams  = array('uedeleted' => 0, 'ueguestid' => $CFG->siteguest, 'uecourseid' => $PAGE->course->id);
+        $groupsql = '';
+        if (!empty($groupid)) {
+            $groupsql = "JOIN {groups_members} gm ON (gm.userid = u.id AND gm.groupid = :uegroupid)";
+            $eparams['uegroupid'] = $groupid;
+        }
         $sql = "INNER JOIN {user} u
-                INNER JOIN ($esql) e ON e.id = u.id
                 INNER JOIN (
-                     SELECT DISTINCT ra.userid
-                       FROM {role_assignments} ra
-                      WHERE ra.roleid $gsql
-                        AND ra.contextid $csql
-                           ) ra ON ra.userid = u.id";
+                    SELECT DISTINCT u.id
+                      FROM {user} u
+                      JOIN {user_enrolments} ue ON ue.userid = u.id
+                      JOIN {enrol} e ON (e.id = ue.enrolid AND e.courseid = :uecourseid)
+                      JOIN {role_assignments} ra ON ra.userid = u.id
+                      $groupsql
+                     WHERE u.deleted = :uedeleted
+                       AND u.id <> :ueguestid
+                       AND ra.roleid $gsql
+                       AND ra.contextid $csql
+                ) e ON e.id = u.id";
 
         return array($sql, array_merge($eparams, $rparams, $cparams));
     }
@@ -456,6 +485,7 @@ class outcome_service_report_helper {
      * @return SplObjectStorage Keyed by outcome_area_info_interface instances and if the question is used by an activity as data.
      */
     public function get_coverage_questions($outcomeid, $courseid) {
+        $system           = context_system::instance();
         $coursecontext    = context_course::instance($courseid);
         $componentlikesql = $this->db->sql_like('areas.component', ':componentqtype');
         $contextlikesql   = $this->db->sql_like('ctx.path', ':ctxpath');
@@ -468,14 +498,16 @@ class outcome_service_report_helper {
                                          AND $componentlikesql
         INNER JOIN {question} q ON q.id = areas.itemid
         INNER JOIN {question_categories} qc ON qc.id = q.category
-        INNER JOIN {context} ctx ON (ctx.id = qc.contextid AND (ctx.id = :contextid OR $contextlikesql))
+        INNER JOIN {context} ctx ON (ctx.id = qc.contextid AND (ctx.id = :contextid OR $contextlikesql OR ctx.id = :systemid1))
          LEFT JOIN {outcome_used_areas} used ON areas.id = used.outcomeareaid
          LEFT JOIN {course_modules} cm ON cm.id = used.cmid AND cm.course = :courseid
              WHERE ao.outcomeid = :outcomeid
+               AND (ctx.id != :systemid2 OR (ctx.id = :systemid3 AND cm.id IS NOT NULL))
           GROUP BY areas.id
         ", array('componentqtype' => 'qtype_%', 'qtype' => 'qtype', 'outcomeid' => $outcomeid,
                  'courseid' => $courseid, 'contextid' => $coursecontext->id,
-                 'ctxpath' => $coursecontext->path.'/%'));
+                 'ctxpath' => $coursecontext->path.'/%', 'systemid1' => $system->id,
+                 'systemid2' => $system->id, 'systemid3' => $system->id));
 
         $questions = new SplObjectStorage();
         foreach ($rs as $row) {

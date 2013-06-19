@@ -4588,6 +4588,7 @@ function delete_course($courseorid, $showfeedback = true) {
 
     // Cleanup outcomes.
     outcome_mapper()->remove_used_outcome_sets($courseid);
+    outcome_mark()->remove_course_marks($courseid);
 
     //trigger events
     $course->context = $context; // you can not fetch context in the event because it was already deleted

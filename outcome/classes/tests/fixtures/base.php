@@ -107,16 +107,4 @@ return array(
             'timecreated' => '1234567890',
         ),
     ),
-    'outcome_marks' => array(
-        array(
-            'id' => '1',
-            'courseid' => '2',
-            'outcomeid' => '1',
-            'userid' => '1',
-            'graderid' => '2',
-            'result' => '1',
-            'timemodified' => '1234567890',
-            'timecreated' => '1234567890',
-        ),
-    ),
 );

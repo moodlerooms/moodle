@@ -95,6 +95,52 @@ class outcome_model_mark_repository extends outcome_model_abstract_repository {
     }
 
     /**
+     * Determine if the user has ever earned this mark
+     * before.  This includes checking in other courses
+     * and in the history.
+     *
+     * @param outcome_model_mark $model
+     * @return bool
+     */
+    public function has_ever_been_earned(outcome_model_mark $model) {
+        if ($model->result == outcome_model_mark::EARNED) {
+            return true;
+        }
+        $result = $this->db->record_exists_select(
+            'outcome_marks', 'userid = ? AND outcomeid = ? AND courseid != ?',
+            array($model->userid, $model->outcomeid, $model->courseid)
+        );
+        if ($result) {
+            return true;
+        }
+        // This query finds the latest history record from other courses.
+        // And then it filters those to see if any of them are marked as earned.
+        // If one exists, that means the user has, in the past, earned the outcome.
+        return $this->db->record_exists_sql('
+            SELECT h.id
+              FROM {outcome_marks_history} h
+        INNER JOIN (
+                SELECT outcomeid, userid, courseid, MAX(timecreated) timelatest
+                  FROM {outcome_marks_history}
+                 WHERE outcomeid = ?
+                   AND userid = ?
+                   AND courseid != ?
+              GROUP BY outcomeid, userid, courseid
+              ORDER BY NULL
+                  ) latest ON h.outcomeid = latest.outcomeid AND h.userid = latest.userid
+                    AND h.userid = latest.userid AND h.timecreated = latest.timelatest
+             WHERE h.outcomeid = ?
+               AND h.userid = ?
+               AND h.courseid != ?
+               AND h.result = ?
+        ', array(
+            $model->outcomeid, $model->userid, $model->courseid,
+            $model->outcomeid, $model->userid, $model->courseid,
+            outcome_model_mark::EARNED,
+        ));
+    }
+
+    /**
      * Save a mark
      *
      * @param outcome_model_mark $model
@@ -121,5 +167,22 @@ class outcome_model_mark_repository extends outcome_model_abstract_repository {
         $this->db->delete_records($this->table, array('id' => $model->id));
         $this->history->delete_mark($model);
         $model->id = null;
+    }
+
+    /**
+     * Remove all marks belonging to the same course
+     *
+     * @param int $courseid
+     */
+    public function remove_by_courseid($courseid) {
+        $rs = $this->db->get_recordset($this->table, array('courseid' => $courseid));
+        foreach ($rs as $row) {
+            /** @var outcome_model_mark $model */
+            $model = $this->map_to_model($row);
+            $this->history->delete_mark($model);
+        }
+        $rs->close();
+
+        $this->db->delete_records($this->table, array('courseid' => $courseid));
     }
 }

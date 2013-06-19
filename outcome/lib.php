@@ -61,6 +61,15 @@ function outcome_attempt() {
 }
 
 /**
+ * This service helps with managing outcome marking.
+ *
+ * @return outcome_service_mark
+ */
+function outcome_mark() {
+    return outcome_service_factory::build('mark');
+}
+
+/**
  * This service helps with backing up and restoring
  * the outcome system.
  *

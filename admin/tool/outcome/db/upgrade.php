@@ -130,5 +130,25 @@ function xmldb_tool_outcome_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2013031813, 'tool', 'outcome');
     }
 
+    if ($oldversion < 2013031814) {
+        $rs = $DB->get_recordset_sql('
+            SELECT outcomeid, userid, MIN(timecreated) timecreated
+              FROM {outcome_marks}
+             WHERE result = ?
+          GROUP BY outcomeid, userid
+        ', array(1));
+
+        foreach ($rs as $row) {
+            $DB->insert_record('outcome_awards', (object) array(
+                'outcomeid'   => $row->outcomeid,
+                'userid'      => $row->userid,
+                'timecreated' => $row->timecreated,
+            ));
+        }
+
+        // outcome savepoint reached
+        upgrade_plugin_savepoint(true, 2013031814, 'tool', 'outcome');
+    }
+
     return true;
 }

@@ -88,9 +88,19 @@ class gradingform_rubric_renderer extends plugin_renderer_base {
             if ($mode == gradingform_rubric_controller::DISPLAY_EDIT_FROZEN) {
                 $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][sortorder]', 'value' => $criterion['sortorder']));
                 $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][description]', 'value' => $criterion['description']));
-                $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][outcomeid]', 'value' => (isset($criterion['outcomeid'])) ? $criterion['outcomeid'] : '0'));
+
+                if (!empty($CFG->core_outcome_enable)) {
+                    $criteriontemplate .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => '{NAME}[criteria][{CRITERION-id}][outcomeid]', 'value' => (isset($criterion['outcomeid'])) ? $criterion['outcomeid'] : '0'));
+                }
             }
             $description = $criterion['description'];
+
+            if (!empty($CFG->core_outcome_enable)) {
+                // Warn users about non-assessable outcomes.
+                if (array_key_exists('outcomeassessable', $criterion) and empty($criterion['outcomeassessable'])) {
+                    $description = $this->output->pix_icon('t/block', get_string('nonassessablewarning', 'outcome')).' '.$description;
+                }
+            }
         }
         $descriptionclass = 'description';
         if (isset($criterion['error_description'])) {

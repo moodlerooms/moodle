@@ -26,9 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-
-require_once($CFG->libdir.'/tablelib.php');
+require_once(__DIR__.'/abstract.php');
 
 /**
  * @package   core_outcome
@@ -37,7 +35,7 @@ require_once($CFG->libdir.'/tablelib.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_table_manage_outcome_sets extends table_sql {
+class outcome_table_manage_outcome_sets extends outcome_table_abstract {
     public function __construct() {
         parent::__construct(__CLASS__);
 
@@ -63,25 +61,15 @@ class outcome_table_manage_outcome_sets extends table_sql {
         $this->set_sql('s.id, s.name, used.count', $from, 'deleted = ?', array(0));
     }
 
-    public function finish_html() {
-        global $PAGE;
-
-        parent::finish_html();
-
-        if ($this->started_output) {
-            $PAGE->requires->yui_module(
-                'moodle-core_outcome-dynamicpanel',
-                'M.core_outcome.init_dynamicpanel',
-                array(array(
-                    'contextId'        => $PAGE->context->id,
-                    'delegateSelector' => '#manage-outcome-sets',
-                    'actionSelector'   => 'a.dynamic-panel',
-                ))
+    protected function panel_data($row, $action) {
+        if ($action == 'get_mapped_courses') {
+            return array(
+                'title' => get_string('mappedcoursesforx', 'outcome', format_string($row->name)),
+                'data-request-outcomesetid' => $row->id,
             );
-            $PAGE->requires->strings_for_js(array('close'), 'outcome');
         }
+        return array();
     }
-
 
     public function col_name($row) {
         return $this->_edit_link($row->name, $row->id);
@@ -91,12 +79,7 @@ class outcome_table_manage_outcome_sets extends table_sql {
         if (empty($row->count)) {
             return '0';
         }
-        return html_writer::link('#', $row->count, array(
-            'title' => get_string('mappedcoursesforx', 'outcome', format_string($row->name)),
-            'class' => 'dynamic-panel',
-            'data-request-outcomesetid' => $row->id,
-            'data-request-action' => 'get_mapped_courses'
-        ));
+        return $this->panel_link($row, 'get_mapped_courses', $row->count);
     }
 
     public function col_action($row) {

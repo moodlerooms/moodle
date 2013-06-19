@@ -4,6 +4,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
     // Shortcuts, etc
         Lang = Y.Lang,
         RETURN_FOCUS,
+        LISTENER = undefined,
         OUTCOME_LIST = 'outcomeList',
         OPEN_LIST = new M.core_outcome.OutcomeList(),
         OUTCOME_MOVE,
@@ -21,6 +22,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
         INPUT_HIDDEN = 'input[type=hidden]',
         INPUT_ID = '#outcome_id',
         INPUT_SET_ID = 'input[name=id]',
+        INPUT_SET_IDNUMBER = '#id_idnumber',
         INPUT_PARENTID = '#outcome_parentid',
         INPUT_DOCNUM = 'input[name=outcome_docnum]',
         INPUT_IDNUMBER = 'input[name=outcome_idnumber]',
@@ -30,6 +32,8 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
         INPUT_DESCRIPTION = 'textarea[name=outcome_description]',
         INPUT_REFERENCE = 'select[name=outcome_reference]',
         INPUT_PLACEMENT = 'select[name=outcome_placement]',
+        ERROR_CODE_SET_IDNUMBER_CHANGE = 'div[data-errorcode=outcomesetidnumberchange]',
+        ERROR_CODE_IDNUMBER_CHANGE = 'div[data-errorcode=outcomeidnumberchange]',
         LABEL_FORM = '.fitemtitle label',
         CSS_ERROR = '.error',
         OUTCOMELIST_TEMPLATE_COMPILED,
@@ -52,6 +56,8 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
             '{{className "row"}}' +
             '">' +
             '<span id="outcome_{{id}}" tabindex="-1" data-id="{{id}}" class="' +
+            '{{className "outcome"}} ' +
+            '{{#if assessable}}{{className "assessable"}} {{/if}}' +
             '{{#if opened}}{{className "folder" "opened"}}{{/if}}' +
             '{{#if closed}}{{className "folder" "closed"}}{{/if}}' +
             '{{#if leaf}}{{className "leaf"}}{{/if}}' +
@@ -110,6 +116,11 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 } catch (e) {
                     new M.core.exception(e);
                 }
+                // Warn users when they edit the outcome set unique ID.
+                Y.one(INPUT_SET_IDNUMBER).on('valuechange', this._handle_unique_id_change, this, {
+                    original: Y.one(INPUT_SET_IDNUMBER).get('value'),
+                    errorNode: Y.one(ERROR_CODE_SET_IDNUMBER_CHANGE)
+                });
             },
 
             /**
@@ -312,6 +323,18 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 srcNode.one(INPUT_ASSESSABLE).set('checked', outcome.get('assessable'));
                 srcNode.one(INPUT_DESCRIPTION).set('value', nullToStr(outcome.get('rawdescription')));
 
+                // Detach listener if it already exists.
+                if (!Lang.isUndefined(LISTENER)) {
+                    LISTENER.detach();
+                    LISTENER = undefined;
+                }
+                if (!outcome.isNew() && outcome.get('id') > 0) {
+                    // Warn users when they edit the outcome unique ID.
+                    LISTENER = srcNode.one(INPUT_IDNUMBER).on('valuechange', this._handle_unique_id_change, this, {
+                        original: srcNode.one(INPUT_IDNUMBER).get('value'),
+                        errorNode: Y.one(ERROR_CODE_IDNUMBER_CHANGE)
+                    });
+                }
                 this._clear_panel_errors(this.get(PANEL_EDIT));
             },
 
@@ -411,6 +434,20 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
 
                 // Update UI and focus on the modified outcome
                 this._update_ui_and_focus(OUTCOME_MOVE);
+            },
+
+            /**
+             * Show error node if value has changed
+             * @param {Event} e
+             * @param {Object} data
+             * @private
+             */
+            _handle_unique_id_change: function(e, data) {
+                if (data.original == e.target.get('value') || data.original == '') {
+                    data.errorNode.hide();
+                } else {
+                    data.errorNode.show();
+                }
             },
 
             /**
@@ -616,5 +653,5 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
         return widget;
     };
 }, '@VERSION@', {
-    requires: ['widget', 'handlebars', 'panel', 'json-parse', 'json-stringify', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-outcomemodel', 'moodle-core-notification']
+    requires: ['widget', 'event-valuechange', 'handlebars', 'panel', 'json-parse', 'json-stringify', 'moodle-core_outcome-accessiblepanel', 'moodle-core_outcome-outcomemodel', 'moodle-core-notification']
 });

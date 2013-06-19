@@ -29,9 +29,9 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->libdir.'/tablelib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->libdir.'/grade/constants.php');
+require_once(__DIR__.'/abstract.php');
 require_once(dirname(__DIR__).'/form/course_performance_filter.php');
 require_once(dirname(__DIR__).'/model/outcome_repository.php');
 require_once(dirname(__DIR__).'/model/filter_repository.php');
@@ -43,7 +43,7 @@ require_once(dirname(__DIR__).'/model/filter_repository.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @author    Mark Nielsen
  */
-class outcome_table_course_performance extends table_sql {
+class outcome_table_course_performance extends outcome_table_abstract {
     /**
      * Group being filtered on.
      *
@@ -61,17 +61,22 @@ class outcome_table_course_performance extends table_sql {
 
         parent::__construct(__CLASS__);
 
+        $this->init_download(get_string('report:course_performance', 'outcome'));
+
         $this->groupid = $mform->get_cached_value('groupid');
         $this->reporthelper = $reporthelper;
 
-        $columns    = array('docnum', 'description');
+        $columns    = array('docnum', 'description', 'completion', 'avegrade', 'scales', 'activities');
         $completion = new completion_info($COURSE);
-        if ($completion->is_enabled()) {
-            $columns[] = 'completion';
+        if (!$completion->is_enabled()) {
+            unset($columns[array_search('completion', $columns)]);
+        }
+        if ($this->is_downloading()) {
+            unset($columns[array_search('scales', $columns)]);
         }
         $this->set_attribute('id', 'outcome-course-performance');
         $this->set_attribute('class', 'generaltable generalbox outcome-report-table');
-        $this->define_columns(array_merge($columns, array('avegrade', 'scales', 'activities')));
+        $this->define_columns($columns);
         $this->sortable(true, 'description');
         $this->no_sorting('scales');
         $this->no_sorting('activities');
@@ -157,7 +162,7 @@ class outcome_table_course_performance extends table_sql {
         $params = array_merge($params, $enrolledparams, $filterparams);
 
         $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", $params);
-        $this->set_count_sql("SELECT COUNT(1) FROM {outcome} o $filtersql->join WHERE $filtersql->where", $filterparams);
+        $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM {outcome} o $filtersql->join WHERE $filtersql->where $filtersql->groupby) x", $filterparams);
     }
 
     /**
@@ -186,23 +191,11 @@ class outcome_table_course_performance extends table_sql {
         $this->define_headers($headers);
     }
 
-    protected function format_percentage($value) {
-        if (is_null($value)) {
-            return '-';
-        }
-        return round($value).'%';
-    }
-
-    protected function panel_link($row, $action, $text) {
-        if ($text == '-') {
-            return $text; // Lame check, but don't link "empty" data.
-        }
-        return html_writer::link('#', $text, array(
-            'class'                  => 'dynamic-panel',
-            'data-request-action'    => $action,
-            'data-request-groupid'    => $this->groupid,
+    protected function panel_data($row, $action) {
+        return array(
+            'data-request-groupid'   => $this->groupid,
             'data-request-outcomeid' => $row->id,
-        ));
+        );
     }
 
     public function col_docnum($row) {
@@ -229,29 +222,13 @@ class outcome_table_course_performance extends table_sql {
     }
 
     public function col_activities($row) {
+        if ($this->is_downloading()) {
+            return $row->activities;
+        }
         if (!empty($row->activities)) {
             return $this->panel_link($row, 'course_performance_associated_content',
                 get_string('associatedcontentx', 'outcome', $row->activities));
         }
         return '-';
-    }
-
-    public function finish_html() {
-        global $PAGE;
-
-        parent::finish_html();
-
-        if ($this->started_output) {
-            $PAGE->requires->yui_module(
-                'moodle-core_outcome-dynamicpanel',
-                'M.core_outcome.init_dynamicpanel',
-                array(array(
-                    'contextId' => $PAGE->context->id,
-                    'delegateSelector' => '#outcome-course-performance',
-                    'actionSelector' => 'a.dynamic-panel',
-                ))
-            );
-            $PAGE->requires->strings_for_js(array('close'), 'outcome');
-        }
     }
 }

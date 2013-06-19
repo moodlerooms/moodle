@@ -86,11 +86,14 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
      * @param outcome_model_filter $filter
      * @return array SQL object and params
      */
-    public function filter_to_sql(outcome_model_filter $filter) {
-        $joins    = array();
-        $ors      = array();
-        $params   = array('filteroutcomesetid' => $filter->outcomesetid);
-        $template = 'LEFT JOIN {outcome_metadata} %1$s ON (o.id = %1$s.outcomeid AND %1$s.name = :filterjoin%1$s)';
+    public function filter_to_sql(outcome_model_filter $filter, $assessable = false) {
+
+        static $pcount = 0; // Prefix count
+        $pcount++;
+
+        $p        = 'f'.$pcount.'_';
+        $ors      = $params = $joins = array();
+        $template = 'LEFT JOIN {outcome_metadata} %1$s ON (o.id = %1$s.outcomeid AND %1$s.name = :'.$p.'filterjoin%1$s)';
         $sql      = (object) array('join' => '', 'where' => '', 'groupby' => '');
         $count    = 0;
 
@@ -98,27 +101,39 @@ class outcome_model_outcome_repository extends outcome_model_abstract_repository
             $ands = array();
             foreach ($this->metadatafields as $field) {
                 if (array_key_exists($field, $info) and !is_null($info[$field])) {
-                    $ands[] = "$field.value = :filter$field$count";
-                    $params["filter$field$count"] = $info[$field];
+                    $ands[] = "$field.value = :{$p}filter$field$count";
+                    $params["{$p}filter$field$count"] = $info[$field];
 
                     if (!array_key_exists($field, $joins)) {
                         $joins[$field] = sprintf($template, $field);
-                        $params['filterjoin'.$field] = $field;
+                        $params[$p.'filterjoin'.$field] = $field;
                     }
                     $count++;
                 }
             }
             // If empty, then bail because we are selecting all in the outcome set.
             if (empty($ands)) {
-                $sql->where = 'o.outcomesetid = :filteroutcomesetid';
-                return array($sql, array('filteroutcomesetid' => $filter->outcomesetid));
+                // Reset all of these to produce a simple query.
+                $ors = $params = $joins = array();
+                break;
             }
             $ors[] = implode(' AND ', $ands);
         }
-        $sql->join    = implode(' ', $joins);
-        $sql->where   = '('.implode(' OR ', $ors).') AND o.outcomesetid = :filteroutcomesetid';
-        $sql->groupby = 'GROUP BY o.id';
+        $sql->where = "o.outcomesetid = :{$p}filteroutcomesetid";
+        $params[$p.'filteroutcomesetid'] = $filter->outcomesetid;
 
+        if ($assessable) {
+            $sql->where .= " AND o.deleted = :{$p}filterdeleted AND o.assessable = :{$p}filterassessable";
+            $params[$p.'filterdeleted']    = 0;
+            $params[$p.'filterassessable'] = 1;
+        }
+        if (!empty($ors)) {
+            $sql->where .= ' AND ('.implode(' OR ', $ors).')';
+        }
+        if (!empty($joins)) {
+            $sql->join    = implode(' ', $joins);
+            $sql->groupby = 'GROUP BY o.id';
+        }
         return array($sql, $params);
     }
 

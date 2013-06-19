@@ -375,6 +375,7 @@ class gradingform_rubric_controller extends gradingform_controller {
                 /** @var $outcome outcome_model_outcome */
                 $outcome = current($outcomes);
                 $this->definition->rubric_criteria[$criteriaid]['outcomeid']         = $outcome->id;
+                $this->definition->rubric_criteria[$criteriaid]['outcomeassessable'] = ($outcome->assessable and !$outcome->deleted);
                 $this->definition->rubric_criteria[$criteriaid]['description']       = $outcome->description;
                 $this->definition->rubric_criteria[$criteriaid]['descriptionformat'] = FORMAT_MOODLE;
             }

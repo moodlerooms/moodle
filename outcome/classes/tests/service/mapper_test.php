@@ -84,19 +84,25 @@ class outcome_service_mapper_test extends basic_testcase {
                 'outcomesetid' => $outcomeset1->id,
                 'name' => $outcomeset1->name,
                 'edulevels' => '9',
+                'rawedulevels' => '9',
                 'subjects' => 'Math',
+                'rawsubjects' => 'Math',
             ),
             array(
                 'outcomesetid' => $outcomeset1->id,
                 'name' => $outcomeset1->name,
                 'edulevels' => '10',
+                'rawedulevels' => '10',
                 'subjects' => 'Math',
+                'rawsubjects' => 'Math',
             ),
             array(
                 'outcomesetid' => $outcomeset2->id,
                 'name' => $outcomeset2->name,
                 'edulevels' => null,
+                'rawedulevels' => null,
                 'subjects' => null,
+                'rawsubjects' => null,
             ),
         );
 
@@ -194,12 +200,13 @@ class outcome_service_mapper_test extends basic_testcase {
             ->with($this->equalTo($area))
             ->will($this->returnValue(array($outcomeset->id => $outcomeset)));
 
+        $normalizer = new outcome_normalizer();
         $service = new outcome_service_mapper($outcomesmock, $outcomesetsmock, $filtersmock, $areasmock);
         $result = $service->get_outcome_mappings_for_form('mod_foo', 'mod', 1, 2);
 
         $expected = array(
-            'outcomesets' => array($outcomeset),
-            'outcomes' => array($outcome),
+            'outcomesets' => $normalizer->normalize_outcome_sets(array($outcomeset)),
+            'outcomes' => $normalizer->normalize_outcomes(array($outcome)),
         );
 
         $this->assertEquals(json_encode($expected), $result);

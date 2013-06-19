@@ -274,6 +274,17 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
              */
             _handle_panel_save: function(e) {
                 e.preventDefault();
+
+                // If not zero, then warn user about pushing the add button.
+                if (this.get(PANEL).get(SRC_NODE).one(SELECT_OUTCOMESET).get('value') != 0) {
+                    new M.core.alert({
+                        title: M.str.outcome.warning,
+                        message: M.str.outcome.pushaddwarning,
+                        yesLabel: M.str.outcome.close,
+                        zIndex: 20000
+                    });
+                    return;
+                }
                 this.get(FILTER_LIST).add(NEW_LIST);
                 this.get(PANEL).hide();
                 this._update_ui();

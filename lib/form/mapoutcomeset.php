@@ -129,6 +129,8 @@ class MoodleQuickForm_map_outcome_set extends HTML_QuickForm_element {
             'ok',
             'close',
             'nooutcomesetsfound',
+            'warning',
+            'pushaddwarning',
         ), 'outcome');
         $PAGE->requires->strings_for_js(array('cancel', 'error'), 'moodle');
 

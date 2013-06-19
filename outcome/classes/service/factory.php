@@ -26,11 +26,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(__DIR__).'/model/area_repository.php');
-require_once(dirname(__DIR__).'/model/filter_repository.php');
-require_once(dirname(__DIR__).'/model/outcome_repository.php');
-require_once(dirname(__DIR__).'/model/outcome_set_repository.php');
-
 /**
  * Service Factory
  *
@@ -69,22 +64,27 @@ class outcome_service_factory {
     }
 
     protected static function build_mapper() {
-        require_once(__DIR__."/mapper.php");
+        require_once(__DIR__.'/mapper.php');
         return new outcome_service_mapper();
     }
 
     protected static function build_area() {
-        require_once(__DIR__."/area.php");
+        require_once(__DIR__.'/area.php');
         return new outcome_service_area();
     }
 
     protected static function build_attempt() {
-        require_once(__DIR__."/attempt.php");
+        require_once(__DIR__.'/attempt.php');
         return new outcome_service_attempt();
     }
 
+    protected static function build_mark() {
+        require_once(__DIR__.'/mark.php');
+        return new outcome_service_mark();
+    }
+
     protected static function build_backup() {
-        require_once(__DIR__."/backup.php");
+        require_once(__DIR__.'/backup.php');
         return new outcome_service_backup();
     }
 }

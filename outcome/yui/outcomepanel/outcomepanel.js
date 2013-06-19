@@ -154,7 +154,9 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                         control.toggleClass('expanded');
 
                         // Recenter after toggle because content of modal changed.
-                        panel.centered();
+                        setTimeout(function() {
+                            panel.centered();
+                        }, 50);
                     })
                 });
 

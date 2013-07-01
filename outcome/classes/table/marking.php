@@ -234,6 +234,9 @@ class outcome_table_marking extends outcome_table_abstract {
     }
 
     function wrap_html_start() {
+        if ($this->is_downloading()) {
+            return;
+        }
         /** @var $url moodle_url */
         $url = clone($this->baseurl);
         $url->param('sesskey', sesskey());
@@ -245,6 +248,9 @@ class outcome_table_marking extends outcome_table_abstract {
     }
 
     function wrap_html_finish() {
+        if ($this->is_downloading()) {
+            return;
+        }
         echo html_writer::start_tag('div', array('class' => 'outcome-marking-submit'));
         echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('savechanges')));
         echo html_writer::end_tag('div');

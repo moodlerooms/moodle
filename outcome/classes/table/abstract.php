@@ -115,7 +115,7 @@ class outcome_table_abstract extends table_sql {
 
         parent::finish_html();
 
-        if ($this->started_output and $this->loadpanelscript) {
+        if ($this->started_output and $this->loadpanelscript and !$this->is_downloading()) {
             $PAGE->requires->yui_module(
                 'moodle-core_outcome-dynamicpanel',
                 'M.core_outcome.init_dynamicpanel',

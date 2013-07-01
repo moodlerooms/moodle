@@ -91,7 +91,7 @@ class outcome_table_course_performance extends outcome_table_abstract {
         $params = array();
         $fields = array('o.id', 'o.docnum', 'o.description',
             '((SUM(a.rawgrade) - SUM(a.mingrade)) / (SUM(a.maxgrade) - SUM(a.mingrade)) * 100) avegrade',
-            'MIN(gi.gradetype) scales', 'COUNT(DISTINCT cmscale.id) activities');
+            'MIN(scale.gradetype) scales', 'COUNT(DISTINCT used.cmid) activities');
 
         $outcomerepo = new outcome_model_outcome_repository();
         $filterrepo  = new outcome_model_filter_repository();
@@ -145,15 +145,19 @@ class outcome_table_course_performance extends outcome_table_abstract {
                                  AND a.userid = latest.userid
                                  AND a.timemodified = latest.timemodified
                          ) ON used.id = a.outcomeusedareaid AND a.userid = u.id
-         LEFT OUTER JOIN {course_modules} cmscale ON cmscale.id = used.cmid
-         LEFT OUTER JOIN {modules} mods ON mods.id = cmscale.module
-         LEFT OUTER JOIN {grade_items} gi ON gi.itemtype = :itemtype AND gi.iteminstance = cmscale.instance
-                                             AND gi.itemmodule = mods.name AND gi.itemnumber = :itemnumber
-                                             AND gi.gradetype = :gradetype
+         LEFT OUTER JOIN (
+                            SELECT cmscale.id cmid, gi.gradetype
+                              FROM {course_modules} cmscale
+                              JOIN {modules} mods ON mods.id = cmscale.module
+                              JOIN {grade_items} gi ON gi.itemtype = :itemtype AND gi.iteminstance = cmscale.instance
+                                                    AND gi.itemmodule = mods.name AND gi.itemnumber = :itemnumber
+                                                    AND gi.gradetype = :gradetype AND gi.courseid = :courseid2
+                         ) scale ON scale.cmid = used.cmid
          $completionsql
         ";
 
         $params['courseid']   = $COURSE->id;
+        $params['courseid2']  = $COURSE->id;
         $params['modvisible'] = 1;
         $params['itemtype']   = 'mod';
         $params['itemnumber'] = 0;

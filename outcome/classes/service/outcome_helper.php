@@ -83,9 +83,11 @@ class outcome_service_outcome_helper {
             }
             // Remove ID, no longer required and if negative, breaks saves.
             unset($rawoutcome->id);
-
-            $outcome->outcomesetid = $outcomeset->id;
             $this->map_to_outcome($outcome, $rawoutcome);
+
+            // Ensure that this is enforced.
+            $outcome->outcomesetid = $outcomeset->id;
+
             $this->clean_and_validate($outcome);
             $this->resolve_parent_id($outcome, $newidmap);
 

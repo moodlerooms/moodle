@@ -123,16 +123,21 @@ class outcome_service_mapper {
         if (is_null($courseid)) {
             $courseid = $COURSE->id;
         }
-        $filters  = $this->filters->find_by_course($courseid);
-        $areasets = $this->outcomesets->find_by_area($model);
+        if ($courseid == SITEID) {
+            $outcomesets = $this->outcomesets->find_by_area($model);
+            $outcomes    = $this->outcomes->find_by_area($model);
+        } else {
+            $filters  = $this->filters->find_by_course($courseid);
+            $areasets = $this->outcomesets->find_by_area($model);
 
-        $outcomes    = array();
-        $outcomesets = array();
-        foreach ($areasets as $outcomeset) {
-            foreach ($filters as $filter) {
-                if ($filter->outcomesetid == $outcomeset->id) {
-                    $outcomes += $this->outcomes->find_by_area_and_filter($model, $filter);
-                    $outcomesets[] = $outcomeset;
+            $outcomes    = array();
+            $outcomesets = array();
+            foreach ($areasets as $outcomeset) {
+                foreach ($filters as $filter) {
+                    if ($filter->outcomesetid == $outcomeset->id) {
+                        $outcomes += $this->outcomes->find_by_area_and_filter($model, $filter);
+                        $outcomesets[] = $outcomeset;
+                    }
                 }
             }
         }

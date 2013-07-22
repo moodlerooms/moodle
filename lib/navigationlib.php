@@ -2239,9 +2239,10 @@ class global_navigation extends navigation_node {
                 $usernode->add(get_string('repositories', 'repository'), new moodle_url('/repository/manage_instances.php', array('contextid' => $usercontext->id)));
             }
         } else if ($course->id == $SITE->id && has_capability('moodle/user:viewdetails', $usercontext) && (!in_array('mycourses', $hiddenfields) || has_capability('moodle/user:viewhiddendetails', $coursecontext))) {
+            require_once($CFG->dirroot.'/grade/lib.php');
 
             // Add view grade report is permitted
-            $reports = get_plugin_list('gradereport');
+            $reports = grade_helper::get_enabled_plugins_reports();
             arsort($reports); // user is last, we want to test it first
 
             $userscourses = enrol_get_users_courses($user->id);
@@ -3538,7 +3539,9 @@ class settings_navigation extends navigation_node {
         if (has_capability('moodle/grade:viewall', $coursecontext)) {
             $reportavailable = true;
         } else if (!empty($course->showgrades)) {
-            $reports = get_plugin_list('gradereport');
+            require_once($CFG->dirroot.'/grade/lib.php');
+
+            $reports = grade_helper::get_enabled_plugins_reports();
             if (is_array($reports) && count($reports)>0) {     // Get all installed reports
                 arsort($reports); // user is last, we want to test it first
                 foreach ($reports as $plugin => $plugindir) {

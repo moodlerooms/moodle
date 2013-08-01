@@ -54,6 +54,49 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
     }
 
     /**
+     * Get a list of question types that cannot be mapped to outcomes.
+     *
+     * @return array
+     */
+    protected function get_unmappable_qtypes() {
+        global $CFG;
+
+        require_once($CFG->dirroot.'/question/engine/bank.php');
+
+        // TODO: Anyway to check if random should be excluded natively?
+        $unmappable = array('random');
+
+        /** @var question_type[] $qtypes */
+        $qtypes = question_bank::get_all_qtypes();
+        foreach ($qtypes as $qtype) {
+            if (!$qtype->is_real_question_type()) {
+                $unmappable[] = $qtype->name();
+            }
+        }
+        return $unmappable;
+    }
+
+    /**
+     * Specialized function to get SQL to exclude question types
+     * that cannot be mapped to outcomes.
+     *
+     * @param array $params Adds params to this and returns it
+     * @return array
+     */
+    protected function get_unmapped_qtypes_sql(array $params) {
+        global $DB;
+
+        $qtypesql = '';
+        $qtypes   = $this->get_unmappable_qtypes();
+        if (!empty($qtypes)) {
+            list($qtypesql, $qtypeparams) = $DB->get_in_or_equal($qtypes, SQL_PARAMS_NAMED, 'qtype', false);
+            $qtypesql = 'AND q.qtype '.$qtypesql;
+            $params   = array_merge($params, $qtypeparams);
+        }
+        return array($qtypesql, $params);
+    }
+
+    /**
      * Get a list of questions are not mapped
      * to any mappable outcomes.
      *
@@ -69,6 +112,7 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
         $params['courseid'] = $this->courseid;
         $params['systemctx1'] = $systemcontext->id;
         $params['systemctx2'] = $systemcontext->id;
+        list($qtypesql, $params) = $this->get_unmapped_qtypes_sql($params);
 
         $unmapped = $DB->get_records_sql("
             SELECT q.id, q.name, COUNT(quiz.id) quizcount
@@ -79,6 +123,7 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
          LEFT JOIN {quiz} quiz ON quiz.id = qqi.quiz AND quiz.course = :courseid
              WHERE qc.contextid $contextinsql AND area.id IS NULL
                AND (qc.contextid != :systemctx1 OR (qc.contextid = :systemctx2 AND quiz.id IS NOT NULL))
+               $qtypesql
           GROUP BY q.id", $params);
 
         return $this->add_invalid_mapped_questions($unmapped);
@@ -100,6 +145,7 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
             return $unmapped;
         }
         list($sql, $params) = $outcomesql;
+        list($qtypesql, $params) = $this->get_unmapped_qtypes_sql($params);
         $componentlike = $DB->sql_like('area.component', ':component');
         list($contextinsql, $contextinparams) = $this->question_context_sql();
 
@@ -121,6 +167,7 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
          LEFT JOIN ($sql) outcomes ON outcomes.id = ao.outcomeid
              WHERE qc.contextid $contextinsql
                AND (qc.contextid != :systemctx1 OR (qc.contextid = :systemctx2 AND quiz.id IS NOT NULL))
+               $qtypesql
           GROUP BY q.id", $params);
 
         foreach ($mapinfos as $mapinfo) {

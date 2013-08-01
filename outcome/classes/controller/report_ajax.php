@@ -47,6 +47,16 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
     public $reporthelper;
 
     /**
+     * @var outcome_service_coverage_helper
+     */
+    public $coveragehelper;
+
+    /**
+     * @var outcome_service_activity_helper
+     */
+    public $activityhelper;
+
+    /**
      * Do any security checks needed for the passed action
      *
      * @abstract
@@ -80,9 +90,13 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
 
         require_once(dirname(__DIR__).'/model/outcome_repository.php');
         require_once(dirname(__DIR__).'/service/report_helper.php');
+        require_once(dirname(__DIR__).'/service/coverage_helper.php');
+        require_once(dirname(__DIR__).'/service/activity_helper.php');
 
-        $this->outcomes     = new outcome_model_outcome_repository();
-        $this->reporthelper = new outcome_service_report_helper();
+        $this->outcomes       = new outcome_model_outcome_repository();
+        $this->reporthelper   = new outcome_service_report_helper();
+        $this->coveragehelper = new outcome_service_coverage_helper();
+        $this->activityhelper = new outcome_service_activity_helper(null, $this->reporthelper);
     }
 
     /**
@@ -104,7 +118,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         }
         $user       = $DB->get_record('user', array('id' => $userid), 'id, firstname, lastname', MUST_EXIST);
         $outcome    = $this->outcomes->find($outcomeid, MUST_EXIST);
-        $activities = $this->reporthelper->get_activity_completion_by_user($outcome->id, $userid, $COURSE->id);
+        $activities = $this->activityhelper->get_activity_completion_by_user($outcome->id, $userid, $COURSE->id);
 
         return json_encode(array(
             'header' => get_string('activitycompletion', 'outcome'),
@@ -126,7 +140,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $outcomeid = required_param('outcomeid', PARAM_INT);
 
         $outcome    = $this->outcomes->find($outcomeid, MUST_EXIST);
-        $activities = $this->reporthelper->get_activity_scales_by_user($outcome->id, $userid, $COURSE->id);
+        $activities = $this->activityhelper->get_activity_scales_by_user($outcome->id, $userid, $COURSE->id);
 
         return json_encode(array(
             'header' => get_string('scales'),
@@ -146,7 +160,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $outcomeid = required_param('outcomeid', PARAM_INT);
 
         $outcome  = $this->outcomes->find($outcomeid, MUST_EXIST);
-        $attempts = $this->reporthelper->get_activity_attempts_by_user($outcome->id, $userid, $COURSE->id);
+        $attempts = $this->activityhelper->get_activity_attempts_by_user($outcome->id, $userid, $COURSE->id);
 
         return json_encode(array(
             'header' => get_string('scales'),
@@ -172,7 +186,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
             throw new coding_exception('Course completion is not enabled');
         }
         $outcome    = $this->outcomes->find($outcomeid, MUST_EXIST);
-        $activities = $this->reporthelper->get_activity_completion_by_course($outcome->id, $COURSE->id, $groupid);
+        $activities = $this->activityhelper->get_activity_completion_by_course($outcome->id, $COURSE->id, $groupid);
 
         return json_encode(array(
             'header' => get_string('activitycompletion', 'outcome'),
@@ -194,7 +208,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $groupid   = optional_param('groupid', 0, PARAM_INT);
 
         $outcome    = $this->outcomes->find($outcomeid, MUST_EXIST);
-        $activities = $this->reporthelper->get_activity_scales_by_course($outcome->id, $COURSE->id, $groupid);
+        $activities = $this->activityhelper->get_activity_scales_by_course($outcome->id, $COURSE->id, $groupid);
 
         return json_encode(array(
             'header' => get_string('scales'),
@@ -214,7 +228,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $groupid   = optional_param('groupid', 0, PARAM_INT);
 
         $outcome  = $this->outcomes->find($outcomeid, MUST_EXIST);
-        $attempts = $this->reporthelper->get_activity_attempts_by_course($outcome->id, $COURSE->id, $groupid);
+        $attempts = $this->activityhelper->get_activity_attempts_by_course($outcome->id, $COURSE->id, $groupid);
 
         return json_encode(array(
             'header' => get_string('grades'),
@@ -233,7 +247,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $outcomeid = required_param('outcomeid', PARAM_INT);
         $outcome   = $this->outcomes->find($outcomeid, MUST_EXIST);
 
-        $activities = $this->reporthelper->get_coverage_resources($outcomeid, $COURSE->id);
+        $activities = $this->coveragehelper->get_coverage_resources($outcomeid, $COURSE->id);
 
         return json_encode(array(
             'header' => get_string('resources', 'outcome'),
@@ -252,7 +266,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $outcomeid = required_param('outcomeid', PARAM_INT);
         $outcome   = $this->outcomes->find($outcomeid, MUST_EXIST);
 
-        $activities = $this->reporthelper->get_coverage_activities($outcomeid, $COURSE->id);
+        $activities = $this->coveragehelper->get_coverage_activities($outcomeid, $COURSE->id);
 
         return json_encode(array(
             'header' => get_string('activities', 'outcome'),
@@ -271,7 +285,7 @@ class outcome_controller_report_ajax extends outcome_controller_abstract {
         $outcomeid = required_param('outcomeid', PARAM_INT);
         $outcome   = $this->outcomes->find($outcomeid, MUST_EXIST);
 
-        $questions = $this->reporthelper->get_coverage_questions($outcomeid, $COURSE->id);
+        $questions = $this->coveragehelper->get_coverage_questions($outcomeid, $COURSE->id);
         return json_encode(array(
             'header' => get_string('questions', 'outcome'),
             'body'   => $this->renderer->coverage_questions($outcome, $questions),

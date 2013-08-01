@@ -198,6 +198,7 @@ class outcome_controller_report extends outcome_controller_abstract {
     public function report_course_coverage_action() {
         global $PAGE, $COURSE, $OUTPUT;
 
+        require_once(dirname(__DIR__).'/mod_archetype.php');
         require_once(dirname(__DIR__).'/table/course_coverage.php');
         require_once(dirname(__DIR__).'/form/course_coverage_filter.php');
 
@@ -214,7 +215,7 @@ class outcome_controller_report extends outcome_controller_abstract {
         }
         $mform->handle_submit();
 
-        $table = new outcome_table_course_coverage($mform, $this->reporthelper);
+        $table = new outcome_table_course_coverage($mform, new outcome_mod_archetype());
         $table->define_baseurl($this->new_url());
 
         if ($this->reporthelper->download_report($table)) {

@@ -31,6 +31,7 @@ require_once(__DIR__.'/abstract.php');
 require_once(dirname(__DIR__).'/form/course_coverage_filter.php');
 require_once(dirname(__DIR__).'/model/outcome_repository.php');
 require_once(dirname(__DIR__).'/model/filter_repository.php');
+require_once(dirname(__DIR__).'/mod_archetype.php');
 
 /**
  * @package   core_outcome
@@ -42,14 +43,14 @@ require_once(dirname(__DIR__).'/model/filter_repository.php');
  */
 class outcome_table_course_coverage extends outcome_table_abstract {
     /**
-     * @var outcome_service_report_helper
+     * @var outcome_mod_archetype
      */
-    protected $reporthelper;
+    protected $modarchetype;
 
-    public function __construct(outcome_form_course_coverage_filter $mform, outcome_service_report_helper $reporthelper) {
+    public function __construct(outcome_form_course_coverage_filter $mform, outcome_mod_archetype $modarchetype) {
         parent::__construct(__CLASS__);
 
-        $this->reporthelper = $reporthelper;
+        $this->modarchetype = $modarchetype;
 
         $this->init_download(get_string('report:course_coverage', 'outcome'));
 
@@ -75,8 +76,8 @@ class outcome_table_course_coverage extends outcome_table_abstract {
         $system  = context_system::instance();
         $context = context_course::instance($COURSE->id);
 
-        $activitymods = $this->reporthelper->get_mod_archetypes(MOD_ARCHETYPE_OTHER);
-        $resourcemods = $this->reporthelper->get_mod_archetypes(MOD_ARCHETYPE_RESOURCE);
+        $activitymods = $this->modarchetype->get_mods_by_archetype(MOD_ARCHETYPE_OTHER);
+        $resourcemods = $this->modarchetype->get_mods_by_archetype(MOD_ARCHETYPE_RESOURCE);
 
         list($activitiesinsql, $activitiesinparmas) = $DB->get_in_or_equal($activitymods, SQL_PARAMS_NAMED);
         list($resourcesinsql, $resourcesinparams) = $DB->get_in_or_equal($resourcemods, SQL_PARAMS_NAMED);

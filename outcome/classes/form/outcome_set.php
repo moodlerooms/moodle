@@ -84,6 +84,17 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setAdvanced('region');
         $mform->addHelpButton('region', 'region', 'outcome');
 
+        $this->definition_outcomes();
+
+        $this->add_action_buttons();
+    }
+
+    /**
+     * Defines the outcome set's outcomes
+     */
+    protected function definition_outcomes() {
+        $mform = $this->_form;
+
         $mform->addElement('header', 'outcomes', get_string('outcomes', 'outcome'));
 
         $html = html_writer::tag('p', get_string('outcomes_help', 'outcome'), array('class' => 'outcomes_help')).
@@ -97,7 +108,18 @@ class outcome_form_outcome_set extends moodleform {
         $mform->addElement('hidden', 'modifiedoutcomedata');
         $mform->setType('outcomedata', PARAM_RAW_TRIMMED);
 
+        $this->definition_edit_panel();
+        $this->definition_move_panel();
+    }
+
+    /**
+     * Defines the HTML for the outcome edit modal
+     */
+    protected function definition_edit_panel() {
+        $mform = $this->_form;
+
         $mform->addElement('html', html_writer::start_tag('div', array('id' => 'outcome_edit_panel')));
+        $mform->addElement('html', html_writer::start_tag('div', array('class' => 'yui3-widget-bd')));
 
         $mform->addElement('hidden', 'outcome_id', 0, array('id' => 'outcome_id'));
         $mform->setType('outcome_id', PARAM_INT);
@@ -116,7 +138,7 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setType('outcome_idnumber', PARAM_TEXT);
         $mform->addHelpButton('outcome_idnumber', 'idnumber', 'outcome');
 
-        $mform->addElement('text', 'outcome_docnum', get_string('docnum', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
+        $mform->addElement('text', 'outcome_docnum', get_string('docnum', 'outcome'), array('size' => '40', 'maxlength' => '255'));
         $mform->setType('outcome_docnum', PARAM_TEXT);
         $mform->addHelpButton('outcome_docnum', 'docnum', 'outcome');
 
@@ -140,23 +162,36 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setType('outcome_description', PARAM_TEXT);
 
         $mform->addElement('html', html_writer::end_tag('div'));
+        $mform->addElement('html', html_writer::end_tag('div'));
+    }
+
+    /**
+     * Defines the HTML for the outcome move modal
+     */
+    protected function definition_move_panel() {
+        $mform = $this->_form;
 
         $mform->addElement('html', html_writer::start_tag('div', array('id' => 'outcome_move_panel')));
+        $mform->addElement('html', html_writer::start_tag('div', array('class' => 'yui3-widget-bd')));
 
         $options = array(
-            'child' => get_string('asfirstchild', 'outcome'),
+            'child'  => get_string('asfirstchild', 'outcome'),
             'before' => get_string('before', 'outcome'),
-            'after' => get_string('after', 'outcome'),
+            'after'  => get_string('after', 'outcome'),
         );
 
-        $elements   = array();
-        $elements[] =& $mform->createElement('select', 'outcome_placement', get_string('outcome_placement', 'outcome'), $options);
-        $elements[] =& $mform->createElement('select', 'outcome_reference', get_string('outcome_reference', 'outcome'), array());
-        $mform->addElement('group', 'outcome_move_grp', 'placeholder', $elements, ' ', false);
+        $selects = html_writer::tag('legend', get_string('moveoutcomeoptslegend', 'outcome'), array('class' => 'accesshide')).
+            html_writer::label(get_string('outcome_placement', 'outcome'), 'id_outcome_placement', false, array('class' => 'accesshide')).
+            html_writer::select($options, 'outcome_placement', '', false, array('id' => 'id_outcome_placement')).
+            html_writer::label(get_string('outcome_reference', 'outcome'), 'id_outcome_reference', false, array('class' => 'accesshide')).
+            html_writer::select(array(), 'outcome_reference', '', false, array('id' => 'id_outcome_reference'));
 
+        $fieldset = html_writer::label('placeholder', 'outcome_move_fieldset', false, array('class' => 'move_label')).
+            html_writer::tag('fieldset', $selects, array('id' => 'outcome_move_fieldset'));
+
+        $mform->addElement('html', $fieldset);
         $mform->addElement('html', html_writer::end_tag('div'));
-
-        $this->add_action_buttons();
+        $mform->addElement('html', html_writer::end_tag('div'));
     }
 
     public function validation($data, $files) {

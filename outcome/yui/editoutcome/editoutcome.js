@@ -34,7 +34,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
         INPUT_PLACEMENT = 'select[name=outcome_placement]',
         ERROR_CODE_SET_IDNUMBER_CHANGE = 'div[data-errorcode=outcomesetidnumberchange]',
         ERROR_CODE_IDNUMBER_CHANGE = 'div[data-errorcode=outcomeidnumberchange]',
-        LABEL_FORM = '.fitemtitle label',
+        LABEL_FORM = 'label.move_label',
         CSS_ERROR = '.error',
         OUTCOMELIST_TEMPLATE_COMPILED,
         OUTCOMELIST_PARTIAL_COMPILED,
@@ -462,7 +462,6 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 var panel = new Y.Panel({
                     srcNode: srcNode,
                     headerContent: title,
-                    width: 450,
                     centered: true,
                     render: true,
                     visible: false,
@@ -501,7 +500,9 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
              * @returns {Y.Panel}
              */
             _create_edit_panel: function() {
-                return this._create_panel(PANEL_EDIT_SRC_NODE, M.str.outcome.addoutcome, this._handle_edit_panel_save);
+                var panel = this._create_panel(PANEL_EDIT_SRC_NODE, M.str.outcome.addoutcome, this._handle_edit_panel_save);
+                panel.set('width', 450);
+                return panel;
             },
 
             /**
@@ -509,9 +510,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
              * @returns {Y.Panel}
              */
             _create_move_panel: function() {
-                var panel = this._create_panel(PANEL_MOVE_SRC_NODE, M.str.outcome.moveoutcome, this._handle_move_panel_save);
-                panel.set('width', '750px');
-                return panel;
+                return this._create_panel(PANEL_MOVE_SRC_NODE, M.str.outcome.moveoutcome, this._handle_move_panel_save);
             },
 
             /**

@@ -29,6 +29,18 @@ tr.outcome-activity-content-attempt .c0, .outcome-sub-content .c0 {
     display: none;
 }
 
+#outcome_move_panel .move_label {
+    float: left;
+}
+
+#outcome_move_panel fieldset {
+    border: none;
+    padding: 0 0 0 10px;
+    margin: 0;
+    width: auto;
+    white-space: nowrap;
+}
+
 .yui3-core_outcome_editoutcome-panel .yui3-widget-hd {
     margin-bottom: 5px;
 }

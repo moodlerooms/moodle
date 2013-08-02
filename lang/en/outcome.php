@@ -170,3 +170,4 @@ $string['totalpoints'] = 'Total points';
 $string['outcomeawardwarning'] = 'This student will retain the <em>{$a}</em> outcome as met at the site level even though it is no longer met in this course.  Please contact the site administrator if you think the outcome should be revoked for the student at the site level.';
 $string['notmappedwarning'] = 'Additional information';
 $string['notmappedwarning_help'] = 'This activity does not have outcomes directly mapped to it, but contains an advanced grading method or questions that are mapped to outcomes.';
+$string['moveoutcomeoptslegend'] = 'Choose new position and reference outcome:';

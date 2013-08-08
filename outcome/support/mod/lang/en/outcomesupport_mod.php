@@ -26,6 +26,4 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Outcome support for question types';
-$string['question'] = 'Question';
-$string['questionnamenotfound'] = '<em>Question name not found</em>';
+$string['pluginname'] = 'Outcome support for activities';

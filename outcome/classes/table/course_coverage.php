@@ -85,7 +85,7 @@ class outcome_table_course_coverage extends outcome_table_abstract {
         $contextlikesql   = $DB->sql_like('ctx.path', ':ctxpath');
 
         $params = array();
-        $fields = array('o.id', 'o.docnum', 'o.description', 'resources', 'activities', 'questions', 'questionsused');
+        $fields = array('o.id', 'o.docnum', 'o.description', 't1.resources', 't2.activities', 't3.questions', 't3.questionsused');
 
         $outcomerepo = new outcome_model_outcome_repository();
         $filterrepo  = new outcome_model_filter_repository();
@@ -157,7 +157,7 @@ class outcome_table_course_coverage extends outcome_table_abstract {
 
         $params = array_merge($params, $activitiesinparmas, $resourcesinparams, $filterparams);
 
-        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", $params);
+        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id, t1.resources, t2.activities, t3.questions, t3.questionsused", $params);
         $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM {outcome} o $filtersql->join WHERE $filtersql->where $filtersql->groupby) x", $filterparams);
     }
 

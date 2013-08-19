@@ -308,7 +308,7 @@ class outcome_service_mapper_test extends basic_testcase {
             ->with($this->equalTo(array(1)))
             ->will($this->returnValue(array($outcome->id => $outcome)));
 
-        $outcomesmock->expects($this->once())
+        $outcomesmock->expects($this->exactly(2))
             ->method('find_by_area')
             ->withAnyParameters()
             ->will($this->returnValue(array($outcome->id => $outcome)));

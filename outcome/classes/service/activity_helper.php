@@ -246,7 +246,7 @@ class outcome_service_activity_helper {
                                    AND gi.gradetype = :gradetype
          LEFT JOIN {grade_grades} gg ON gg.itemid = gi.id AND gg.userid = u.id
              WHERE o.id = :outcomeid AND cm.course = :courseid
-          GROUP BY cm.id
+          GROUP BY cm.id, gi.id
         ", $params);
 
         $modinfo    = get_fast_modinfo($courseid);
@@ -287,7 +287,6 @@ class outcome_service_activity_helper {
                       SELECT outcomeusedareaid, userid, MAX(timemodified) timemodified
                         FROM {outcome_attempts}
                     GROUP BY outcomeusedareaid, userid
-                    ORDER BY NULL
                    ) latest ON a.outcomeusedareaid = latest.outcomeusedareaid
                            AND a.userid = latest.userid
                            AND a.timemodified = latest.timemodified
@@ -350,7 +349,6 @@ class outcome_service_activity_helper {
                       SELECT outcomeusedareaid, userid, MAX(timemodified) timemodified
                         FROM {outcome_attempts}
                     GROUP BY outcomeusedareaid, userid
-                    ORDER BY NULL
                    ) latest ON a.outcomeusedareaid = latest.outcomeusedareaid
                            AND a.userid = latest.userid
                            AND a.timemodified = latest.timemodified
@@ -358,7 +356,7 @@ class outcome_service_activity_helper {
         INNER JOIN {modules} mods ON mods.id = cm.module AND mods.visible = :visible
              WHERE o.id = :outcomeid
                AND cm.course = :courseid
-          GROUP BY areas.id
+          GROUP BY areas.id, cm.id
         ", array_merge($params, $eparams));
 
         $modinfo  = get_fast_modinfo($courseid);

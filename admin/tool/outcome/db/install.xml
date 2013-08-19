@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/outcome/db" VERSION="20130507" COMMENT="XMLDB file for Moodle admin/tool/outcome"
+<XMLDB PATH="admin/tool/outcome/db" VERSION="20130819" COMMENT="XMLDB file for Moodle admin/tool/outcome"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd"
 >
@@ -124,12 +124,12 @@
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time created." PREVIOUS="timemodified"/>
       </FIELDS>
       <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="outcomeusedareaid"/>
-        <KEY NAME="outcomeusedareaid" TYPE="foreign" FIELDS="outcomeusedareaid" REFTABLE="outcome_used_areas" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
-        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" PREVIOUS="outcomeusedareaid"/>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="userid"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="itemid" UNIQUE="false" FIELDS="itemid"/>
+        <INDEX NAME="outcomeusedareaid_userid" UNIQUE="false" FIELDS="outcomeusedareaid, userid" NEXT="itemid"/>
+        <INDEX NAME="itemid" UNIQUE="false" FIELDS="itemid" PREVIOUS="outcomeusedareaid_userid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="outcome_marks" COMMENT="Graders will manually mark the user as having Met or Not Met an outcome." PREVIOUS="outcome_attempts" NEXT="outcome_marks_history">

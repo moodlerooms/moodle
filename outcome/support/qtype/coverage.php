@@ -157,7 +157,7 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
         ), $contextinparams, $params);
 
         $mapinfos = $DB->get_records_sql("
-            SELECT q.id, q.name, COUNT(outcomes.id) valid, COUNT(quiz.id) quizcount
+            SELECT q.id, q.name, COUNT(outcomes.id) validcount, COUNT(quiz.id) quizcount
               FROM {question} q
         INNER JOIN {question_categories} qc ON qc.id = q.category
         INNER JOIN {outcome_areas} area ON $componentlike AND area.itemid = q.id
@@ -171,7 +171,7 @@ class outcomesupport_qtype_coverage extends outcome_coverage_abstract {
           GROUP BY q.id", $params);
 
         foreach ($mapinfos as $mapinfo) {
-            if (empty($mapinfo->valid) and !array_key_exists($mapinfo->id, $unmapped)) {
+            if (empty($mapinfo->validcount) and !array_key_exists($mapinfo->id, $unmapped)) {
                 $unmapped[$mapinfo->id] = $mapinfo;
             }
         }

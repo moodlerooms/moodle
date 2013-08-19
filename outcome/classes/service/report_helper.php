@@ -119,7 +119,7 @@ class outcome_service_report_helper {
             $groupsql = "JOIN {groups_members} gm ON (gm.userid = u.id AND gm.groupid = :uegroupid)";
             $eparams['uegroupid'] = $groupid;
         }
-        $sql = "INNER JOIN {user} u
+        $sql = "INNER JOIN {user} u ON 1 = 1
                 INNER JOIN (
                     SELECT DISTINCT u.id
                       FROM {user} u

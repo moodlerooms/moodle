@@ -134,7 +134,6 @@ class outcome_table_marking extends outcome_table_abstract {
                             SELECT outcomeusedareaid, userid, MAX(timemodified) timemodified
                               FROM {outcome_attempts}
                           GROUP BY outcomeusedareaid, userid
-                          ORDER BY NULL
                          ) latest ON a.outcomeusedareaid = latest.outcomeusedareaid
                                  AND a.userid = latest.userid
                                  AND a.timemodified = latest.timemodified
@@ -156,7 +155,7 @@ class outcome_table_marking extends outcome_table_abstract {
         $params['itemnumber']    = 0;
         $params['gradetype']     = GRADE_TYPE_SCALE;
 
-        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id", array_merge($params, $filterparams));
+        $this->set_sql(implode(', ', $fields), $from, "$filtersql->where GROUP BY o.id, m.id", array_merge($params, $filterparams));
         $this->set_count_sql("SELECT COUNT(1) FROM (SELECT o.id FROM {outcome} o $filtersql->join WHERE $filtersql->where $filtersql->groupby) x", $filterparams);
     }
 

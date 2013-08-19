@@ -82,7 +82,7 @@ class outcomesupport_mod_coverage extends outcome_coverage_abstract {
         $params['courseid'] = $this->courseid;
 
         $mapinfos = $DB->get_records_sql("
-            SELECT cm.id, COUNT(outcomes.id) valid
+            SELECT cm.id, COUNT(outcomes.id) validcount
               FROM {course_modules} cm
         INNER JOIN {outcome_used_areas} u ON u.cmid = cm.id
         INNER JOIN {outcome_areas} a ON a.id = u.outcomeareaid
@@ -93,7 +93,7 @@ class outcomesupport_mod_coverage extends outcome_coverage_abstract {
         ", $params);
 
         foreach ($mapinfos as $mapinfo) {
-            if (empty($mapinfo->valid)) {
+            if (empty($mapinfo->validcount)) {
                 $unmapped[$mapinfo->id] = (object) array(
                     'id'        => $mapinfo->id,
                     'areacount' => 0, // Zero out because none are valid anyways.

@@ -54,7 +54,7 @@ class outcome_form_outcome_set extends moodleform {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        $mform->addElement('text', 'name', get_string('name', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
+        $mform->addElement('text', 'name', get_string('name', 'outcome'), array('size' => '40', 'maxlength' => '255'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
@@ -65,21 +65,21 @@ class outcome_form_outcome_set extends moodleform {
 
         $mform->addElement('html', html_writer::end_tag('div'));
 
-        $mform->addElement('text', 'idnumber', get_string('idnumber', 'outcome'), array('size'=>'40', 'maxlength' => '255'));
+        $mform->addElement('text', 'idnumber', get_string('idnumber', 'outcome'), array('size' => '40', 'maxlength' => '255'));
         $mform->setType('idnumber', PARAM_TEXT);
         $mform->addRule('idnumber', null, 'required', null, 'client');
         $mform->addHelpButton('idnumber', 'idnumber', 'outcome');
 
-        $mform->addElement('textarea', 'description', get_string('description', 'outcome'), array('rows'=>'5', 'cols'=>'40'));
+        $mform->addElement('textarea', 'description', get_string('description', 'outcome'), array('rows' => '5', 'cols' => '40'));
         $mform->setType('description', PARAM_TEXT);
         $mform->setAdvanced('description');
 
-        $mform->addElement('text', 'provider', get_string('provider', 'outcome'), array('size'=>'5', 'maxlength' => '255'));
+        $mform->addElement('text', 'provider', get_string('provider', 'outcome'), array('size' => '5', 'maxlength' => '255'));
         $mform->setType('provider', PARAM_TEXT);
         $mform->setAdvanced('provider');
         $mform->addHelpButton('provider', 'provider', 'outcome');
 
-        $mform->addElement('text', 'region', get_string('region', 'outcome'), array('size'=>'5', 'maxlength' => '255'));
+        $mform->addElement('text', 'region', get_string('region', 'outcome'), array('size' => '5', 'maxlength' => '255'));
         $mform->setType('region', PARAM_TEXT);
         $mform->setAdvanced('region');
         $mform->addHelpButton('region', 'region', 'outcome');

@@ -500,9 +500,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
              * @returns {Y.Panel}
              */
             _create_edit_panel: function() {
-                var panel = this._create_panel(PANEL_EDIT_SRC_NODE, M.str.outcome.addoutcome, this._handle_edit_panel_save);
-                panel.set('width', 450);
-                return panel;
+                return this._create_panel(PANEL_EDIT_SRC_NODE, M.str.outcome.addoutcome, this._handle_edit_panel_save);
             },
 
             /**

@@ -126,7 +126,6 @@ class outcome_model_mark_repository extends outcome_model_abstract_repository {
                    AND userid = ?
                    AND courseid != ?
               GROUP BY outcomeid, userid, courseid
-              ORDER BY NULL
                   ) latest ON h.outcomeid = latest.outcomeid AND h.userid = latest.userid
                     AND h.userid = latest.userid AND h.timecreated = latest.timelatest
              WHERE h.outcomeid = ?

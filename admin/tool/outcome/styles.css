@@ -29,6 +29,10 @@ tr.outcome-activity-content-attempt .c0, .outcome-sub-content .c0 {
     display: none;
 }
 
+#outcome_edit_panel .yui3-widget-bd  {
+    min-width: 450px;
+}
+
 #outcome_move_panel .move_label {
     float: left;
 }

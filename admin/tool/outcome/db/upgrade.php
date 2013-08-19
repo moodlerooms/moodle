@@ -150,5 +150,27 @@ function xmldb_tool_outcome_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2013031814, 'tool', 'outcome');
     }
 
+    if ($oldversion < 2013031815) {
+
+        // Define key outcomeusedareaid (foreign) to be dropped form outcome_attempts
+        $table = new xmldb_table('outcome_attempts');
+        $key   = new xmldb_key('outcomeusedareaid', XMLDB_KEY_FOREIGN, array('outcomeusedareaid'), 'outcome_used_areas', array('id'));
+
+        // Launch drop key outcomeusedareaid
+        $dbman->drop_key($table, $key);
+
+        // Define index outcomeusedareaid_userid (not unique) to be added to outcome_attempts
+        $table = new xmldb_table('outcome_attempts');
+        $index = new xmldb_index('outcomeusedareaid_userid', XMLDB_INDEX_NOTUNIQUE, array('outcomeusedareaid', 'userid'));
+
+        // Conditionally launch add index outcomeusedareaid_userid
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // outcome savepoint reached
+        upgrade_plugin_savepoint(true, 2013031815, 'tool', 'outcome');
+    }
+
     return true;
 }

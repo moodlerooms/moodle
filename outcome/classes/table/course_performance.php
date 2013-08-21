@@ -140,7 +140,6 @@ class outcome_table_course_performance extends outcome_table_abstract {
                             SELECT outcomeusedareaid, userid, MAX(timemodified) timemodified
                               FROM {outcome_attempts}
                           GROUP BY outcomeusedareaid, userid
-                          ORDER BY NULL
                          ) latest ON a.outcomeusedareaid = latest.outcomeusedareaid
                                  AND a.userid = latest.userid
                                  AND a.timemodified = latest.timemodified

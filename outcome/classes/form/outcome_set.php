@@ -106,7 +106,7 @@ class outcome_form_outcome_set extends moodleform {
         $mform->setType('outcomedata', PARAM_RAW_TRIMMED);
 
         $mform->addElement('hidden', 'modifiedoutcomedata');
-        $mform->setType('outcomedata', PARAM_RAW_TRIMMED);
+        $mform->setType('modifiedoutcomedata', PARAM_RAW_TRIMMED);
 
         $this->definition_edit_panel();
         $this->definition_move_panel();

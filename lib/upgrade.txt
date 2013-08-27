@@ -18,6 +18,7 @@ information provided here is intended especially for developers.
 * The ability to use an 'insecure' rc4encrypt/rc4decrypt key has been removed.
 * Use $CFG->debugdeveloper instead of debugging('', DEBUG_DEVELOPER).
 * Use set_debugging(DEBUG_xxx) when changing debugging level for current request.
+* The settings_navigation->get_course_modules function was removed.
 * Function moveto_module() does not modify $mod argument and instead now returns the new module visibility value.
 * Use behat_selectors::get_allowed_text_selectors() and behat_selectors::get_allowed_selectors() instead of
   behat_command::$allowedtextselectors and behat_command::$allowedselectors

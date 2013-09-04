@@ -19,13 +19,13 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
         TEMPLATE = '{{#each outcomeSetList}}' +
             '{{#if outcomeList}}' +
             '<div class="{{../../cssOutcomeSetGroup}}">' +
-            '<div class="{{../../cssOutcomeSet}}" data-outcomesetid="{{id}}" data-before-aria-label="' + '{{{getString "openx" name}}}' + '" data-after-aria-label="' + '{{{getString "closex" name}}}' + '">' +
+            '<div class="{{../../cssOutcomeSet}}" tabindex="0" role="button" data-outcomesetid="{{id}}" data-before-aria-label="' + '{{{getString "openx" name}}}' + '" data-after-aria-label="' + '{{{getString "closex" name}}}' + '">' +
             '{{{name}}}' +
             '</div>' +
             '<div class="{{../../cssOutcomeList}}">' +
             '<span class="accesshide" aria-hidden="true">{{{getString "outcomesforx" name}}}</span>' +
             '{{#each outcomeList}}' +
-            '<div class="outcome" tabindex="-1" role="button" data-outcomeid="{{id}}">{{{description}}}</div>' +
+            '<div class="outcome" tabindex="0" role="button" data-outcomeid="{{id}}">{{{description}}}</div>' +
             '{{/each}}' +
             '</div>' +
             '</div>' +
@@ -138,6 +138,7 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
              */
             _bind_panel_ui: function() {
                 NODE_CONTAINER.delegate('click', this._handle_select_outcome, '.outcome', this);
+                NODE_CONTAINER.delegate('key', this._handle_select_outcome, 'enter', '.outcome', this);
 
                 var panel = this.get(PANEL);
                 NODE_CONTAINER.all('.' + CSS.OUTCOME_SET_GROUP).each(function(node) {
@@ -148,7 +149,8 @@ YUI.add('moodle-core_outcome-outcomepanel', function(Y) {
                         ariaState: 'aria-expanded'
                     });
                     control.plug(M.core_outcome.ariacontrol, {
-                        ariaControls: controlled
+                        ariaControls: controlled,
+                        key: 'enter'
                     });
                     control.core_outcome_ariacontrol.on('afterToggle', function() {
                         control.toggleClass('expanded');

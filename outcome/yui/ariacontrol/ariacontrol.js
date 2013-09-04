@@ -30,9 +30,13 @@ YUI.add('moodle-core_outcome-ariacontrol', function(Y) {
                 if (this.get('event') !== '') {
                     this.onHostEvent(this.get('event'), this.handle_host_event);
                 }
+                // Optionally wire up key event
+                if (this.get('key') !== '') {
+                    this.get(HOST).on('key', this.handle_host_event, this.get('key'), this);
+                }
                 // Setup tabindex for focus
                 if (this.get('autoFocus')) {
-                    this.get(HOST).setAttribute('tabindex', '-1');
+                    this.get(HOST).setAttribute('tabindex', this.get('tabIndex'));
                 }
                 // Optionally update aria-label
                 this.toggle_aria_label();
@@ -199,6 +203,24 @@ YUI.add('moodle-core_outcome-ariacontrol', function(Y) {
                     writeOnce: true
                 },
                 /**
+                 * The tabindex attribute to set on the host.
+                 *
+                 * This is only used if autoFocus is turned on.
+                 *
+                 * Defaults to the hosts tabindex attribute value if it exists,
+                 * otherwise defaults to -1.
+                 */
+                tabIndex: {
+                    valueFn: function() {
+                        if (this.get(HOST).hasAttribute('tabindex')) {
+                            return this.get(HOST).getAttribute('tabindex');
+                        }
+                        return '-1';
+                    },
+                    validator: Lang.isString,
+                    writeOnce: true
+                },
+                /**
                  * The node or CSS selector string of the element that
                  * is controlled by the host.
                  *
@@ -222,6 +244,20 @@ YUI.add('moodle-core_outcome-ariacontrol', function(Y) {
                  */
                 event: {
                     value: 'click',
+                    validator: Lang.isString,
+                    writeOnce: true
+                },
+                /**
+                 * The keys that trigger the change of the aria-label
+                 * attribute on the host.
+                 *
+                 * If set to an empty string, then no key event will be wired.
+                 *
+                 * Requires both beforeAriaLabel and afterAriaLabel to be set
+                 * to non-empty strings.
+                 */
+                key: {
+                    value: '',
                     validator: Lang.isString,
                     writeOnce: true
                 },

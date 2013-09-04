@@ -15,7 +15,7 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
 
     // Templates
         TEMPLATE = '{{#unless isFrozen}}' +
-            '<a href="#" data-id="0" data-action="add" role="button" tabindex="-1">{{strselectoutcomes}}</a> ' +
+            '<a href="#" data-id="0" data-action="add" role="button">{{strselectoutcomes}}</a> ' +
             '{{/unless}}' +
             '{{#unless outcomeSetList}}' +
             '<div>{{strnoselectedoutcomes}}</div>' +
@@ -27,7 +27,7 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
             '<li tabindex="-1" class="outcome" data-outcomeid="{{id}}" data-outcomesetid="{{outcomesetid}}">' +
             '{{#unless ../../../isFrozen}}' +
             '<span class="actions">' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1">' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="delete">' +
             '<img src="{{../../../../urlImgDelete}}" />' +
             '<span class="accesshide">{{{getString "deletex" description}}}</span>' +
             '</a>' +
@@ -207,6 +207,12 @@ YUI.add('moodle-core_outcome-mapoutcome', function(Y) {
                     this.get('outcomeSetList').remove(outcomeset);
                 }
                 this.get('outcomeList').remove(outcome);
+
+                var focusNode = this.get(BOX).one('.' + this.getClassName('mapped', 'outcomes'));
+                if (!(focusNode instanceof Y.Node)) {
+                    focusNode = this.get(BOX).one(LINK_ADD);
+                }
+                focusNode.focus();
             }
         },
         {

@@ -37,7 +37,7 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
             '<li>' +
             '{{#unless ../isFrozen}}' +
             '<span class="actions">' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1">' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="delete">' +
             '<img src="{{../../urlImgDelete}}" />' +
             '<span class="accesshide">{{{getString "deletex" name}}}</span>' +
             '</a>' +
@@ -264,7 +264,11 @@ YUI.add('moodle-core_outcome-mapoutcomeset', function(Y) {
                 var model = this.get(FILTER_LIST).getById(target.getData('id'));
                 this.get(FILTER_LIST).remove(model);
                 this._update_ui();
-                this.get(BOX).one('ul').focus();
+                var focusNode = this.get(BOX).one('ul');
+                if (!(focusNode instanceof Y.Node)) {
+                    focusNode = this.get(BOX).one(LINK_ADD);
+                }
+                focusNode.focus();
             },
 
             /**

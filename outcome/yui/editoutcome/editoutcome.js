@@ -55,7 +55,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
             '<span class="' +
             '{{className "row"}}' +
             '">' +
-            '<span id="outcome_{{id}}" tabindex="-1" data-id="{{id}}" class="' +
+            '<span id="outcome_{{id}}" tabindex="0" data-id="{{id}}" class="' +
             '{{className "outcome"}} ' +
             '{{#if assessable}}{{className "assessable"}} {{/if}}' +
             '{{#if opened}}{{className "folder" "opened"}}{{/if}}' +
@@ -67,10 +67,10 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
             '<span class="' +
             '{{className "actions"}}' +
             '">' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="add" tabindex="-1" title="' + '{{{title "addchildoutcome" description}}}' + '">' + M.str.outcome.add + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="edit" tabindex="-1" title="' + '{{{title "editx" description}}}' + '">' + M.str.outcome.edit + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="move" tabindex="-1" title="' + '{{{title "movex" description}}}' + '">' + M.str.outcome.move + '</a> ' +
-            '<a href="#" data-id="{{id}}" role="button" data-action="delete" tabindex="-1" title="' + '{{{title "deletex" description}}}' + '">' + M.str.outcome.delete + '</a>' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="add" title="' + '{{{title "addchildoutcome" description}}}' + '">' + M.str.outcome.add + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="edit" title="' + '{{{title "editx" description}}}' + '">' + M.str.outcome.edit + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="move" title="' + '{{{title "movex" description}}}' + '">' + M.str.outcome.move + '</a> ' +
+            '<a href="#" data-id="{{id}}" role="button" data-action="delete" title="' + '{{{title "deletex" description}}}' + '">' + M.str.outcome.delete + '</a>' +
             '</span>' +
             '</span>' +
             '{{#if opened}}' +
@@ -146,6 +146,7 @@ YUI.add('moodle-core_outcome-editoutcome', function(Y) {
                 this.get(BOX).delegate('click', this._handle_move, LINK_MOVE, this);
                 this.get(BOX).delegate('click', this._handle_delete, LINK_DELETE, this);
                 this.get(BOX).delegate('click', this._handle_folder, LINK_FOLDER, this);
+                this.get(BOX).delegate('key', this._handle_folder, 'enter', LINK_FOLDER, this);
             },
 
             /**

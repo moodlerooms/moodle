@@ -28,7 +28,7 @@
      id="namedview3490"
      showgrid="false"
      inkscape:zoom="11.8"
-     inkscape:cx="-4.9576271"
+     inkscape:cx="-19.915254"
      inkscape:cy="10"
      inkscape:window-x="0"
      inkscape:window-y="0"
@@ -50,7 +50,7 @@
       <stop
          offset="0"
          id="stop13523"
-         style="stop-color:#5e99d3;stop-opacity:1" />
+         style="stop-color:#999999;stop-opacity:1;" />
       <stop
          id="stop13547"
          offset="1"
@@ -121,11 +121,11 @@
      transform="matrix(0.26662332,0,0,0.24958583,-7.0537755,-238.39181)"
      id="rect12743"
      d="m 57.8,976.1 -3.1,-6.9 -18.5,0 0,52 55.4,0 0,-45.1 z"
-     style="fill:url(#linearGradient3495);stroke:#367dc6;stroke-width:3.89976961999999983;filter:url(#filter14001);stroke-miterlimit:4;stroke-dasharray:none;stroke-linejoin:round"
+     style="fill:url(#linearGradient3495);stroke:#999999;stroke-width:3.89976961999999983;filter:url(#filter14001);stroke-miterlimit:4;stroke-dasharray:none;stroke-linejoin:round;stroke-opacity:1"
      inkscape:connector-curvature="0" />
   <path
      id="path14673"
      d="m 9.1,5.2378 c -6.9,0 -7,0 -7,0"
-     style="fill:none;stroke:#367cc5"
+     style="fill:none;stroke:#999999;stroke-opacity:1"
      inkscape:connector-curvature="0" />
 </svg>

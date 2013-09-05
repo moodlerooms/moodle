@@ -57,7 +57,7 @@ class outcome_table_course_outcome_sets extends table_sql {
         $this->define_columns($columns);
         $this->define_headers($headers);
 
-        call_user_func_array(array($this, 'no_sorting'), $reports);
+        array_map(array($this, 'no_sorting'), $reports);
         $this->collapsible(false);
 
         $from = '{outcome_sets} s INNER JOIN {outcome_used_sets} us ON s.id = us.outcomesetid';

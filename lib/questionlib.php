@@ -341,6 +341,9 @@ function question_delete_question($questionid) {
         }
     }
 
+    // Cleanup outcomes.
+    \core_outcome\service::area()->delete_area('qtype_'.$question->qtype, 'qtype', $question->id);
+
     // Finally delete the question record itself
     $DB->delete_records('question', array('id' => $questionid));
     question_bank::notify_question_edited($questionid);
@@ -2053,4 +2056,20 @@ function question_page_type_list($pagetype, $parentcontext, $currentcontext) {
     } else {
         return $types;
     }
+}
+
+/**
+ * Fetch the outcome area for a question if it exists.
+ *
+ * @param int $questionid
+ * @param null|string $qtype The question type
+ * @return bool|\core_outcome\model\area_model False when it doesn't exist
+ */
+function question_get_outcome_area($questionid, $qtype = null) {
+    global $DB;
+
+    if (is_null($qtype)) {
+        $qtype = $DB->get_field('question', 'qtype', array('id' => $questionid), MUST_EXIST);
+    }
+    return \core_outcome\service::area()->get_area('qtype_'.$qtype, 'qtype', $questionid);
 }

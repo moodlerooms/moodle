@@ -128,29 +128,6 @@ function lti_parse_grade_delete_message($xml) {
     return $parsed;
 }
 
-function lti_accepts_grades($ltiinstance) {
-    global $DB;
-
-    $acceptsgrades = true;
-    $ltitype = $DB->get_record('lti_types', array('id' => $ltiinstance->typeid));
-
-    if (empty($ltitype->toolproxyid)) {
-        $typeconfig = lti_get_config($ltiinstance);
-
-        $typeacceptgrades = isset($typeconfig['acceptgrades']) ? $typeconfig['acceptgrades'] : LTI_SETTING_DELEGATE;
-
-        if (!($typeacceptgrades == LTI_SETTING_ALWAYS ||
-            ($typeacceptgrades == LTI_SETTING_DELEGATE && $ltiinstance->instructorchoiceacceptgrades == LTI_SETTING_ALWAYS))) {
-            $acceptsgrades = false;
-        }
-    } else {
-        $enabledcapabilities = explode("\n", $ltitype->enabledcapability);
-        $acceptsgrades = in_array('Result.autocreate', $enabledcapabilities);
-    }
-
-    return $acceptsgrades;
-}
-
 /**
  * Set the passed user ID to the session user.
  *

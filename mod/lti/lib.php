@@ -102,6 +102,9 @@ function lti_add_instance($lti, $mform) {
     $lti->timecreated = time();
     $lti->timemodified = $lti->timecreated;
     $lti->servicesalt = uniqid('', true);
+    if (!isset($lti->typeid)) {
+        $lti->typeid = null;
+    }
 
     lti_force_type_config_settings($lti, lti_get_type_config_by_instance($lti));
 
@@ -477,6 +480,11 @@ function lti_get_lti_types_from_proxy_id($toolproxyid) {
 function lti_grade_item_update($basiclti, $grades = null) {
     global $CFG;
     require_once($CFG->libdir.'/gradelib.php');
+    require_once($CFG->dirroot.'/mod/lti/locallib.php');
+
+    if (!lti_accepts_grades($basiclti)) {
+        return 0;
+    }
 
     $params = array('itemname' => $basiclti->name, 'idnumber' => $basiclti->cmidnumber);
 
@@ -499,6 +507,16 @@ function lti_grade_item_update($basiclti, $grades = null) {
     }
 
     return grade_update('mod/lti', $basiclti->course, 'mod', 'lti', $basiclti->id, 0, $grades, $params);
+}
+
+/**
+ * @param stdClass $basiclti
+ * @param int      $userid
+ * @param bool     $nullifnone
+ */
+function lti_update_grades($basiclti, $userid=0, $nullifnone=true) {
+    // LTI doesn't have its own grade table so the only thing to do is update the grade item.
+    lti_grade_item_update($basiclti);
 }
 
 /**

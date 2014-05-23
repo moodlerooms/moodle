@@ -16,6 +16,9 @@ body.has_dock {margin-left:30px;}
 #dock .controls {position:absolute;bottom:1em;text-align:center;width:100%;}
 #dock .controls img {cursor:pointer;}
 
+#dock .block_docked .unlist > li > .column {display:inline-block;}
+.ie6 #dock .block_docked .unlist .column {display:inline;}
+
 /** For the panel the docked blocks are shown in */
 #dockeditempanel {min-width:200px;position:relative;z-index:12000;left:100%;}
 #dockeditempanel.dockitempanel_hidden {display:none;}

@@ -33,6 +33,27 @@ require_once($CFG->dirroot . '/mod/assignment/backup/moodle2/restore_assignment_
 class restore_assignment_activity_task extends restore_activity_task {
 
     /**
+     * Given a comment area, return the itemname that contains the itemid mappings
+     */
+    public function get_comment_mapping_itemname($commentarea) {
+        if ($commentarea == 'submission_comments') {
+            return 'assignment_submission';
+        }
+
+        return $commentarea;
+    }
+
+    /**
+     * @return stdClass
+     */
+    public function get_comment_file_annotation_info() {
+        return (object) array(
+            'component' => 'mod_assignment',
+            'filearea' => 'comments',
+        );
+    }
+
+    /**
      * Define (add) particular settings this activity can have
      */
     protected function define_my_settings() {

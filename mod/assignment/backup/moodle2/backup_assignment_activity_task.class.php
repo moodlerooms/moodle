@@ -46,6 +46,17 @@ class backup_assignment_activity_task extends backup_activity_task {
         $this->add_step(new backup_assignment_activity_structure_step('assignment_structure', 'assignment.xml'));
     }
 
+
+    /**
+     * @return stdClass
+     */
+    public function get_comment_file_annotation_info() {
+        return (object) array(
+            'component' => 'mod_assignment',
+            'filearea' => 'comments',
+        );
+    }
+
     /**
      * Encodes URLs to the index.php and view.php scripts
      *

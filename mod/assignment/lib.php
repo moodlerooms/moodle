@@ -3105,6 +3105,9 @@ function assignment_pluginfile($course, $cm, $context, $filearea, $args, $forced
         return false;
     }
 
+    // Try comment area first. SC INT-4387.
+    assignment_comments_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, $options);
+
     require_once($CFG->dirroot.'/mod/assignment/type/'.$assignment->assignmenttype.'/assignment.class.php');
     $assignmentclass = 'assignment_'.$assignment->assignmenttype;
     $assignmentinstance = new $assignmentclass($cm->id, $assignment, $cm, $course);
@@ -4082,4 +4085,127 @@ function assignment_page_type_list($pagetype, $parentcontext, $currentcontext) {
  */
 function assignment_grading_areas_list() {
     return array('submission' => get_string('submissions', 'mod_assignment'));
+}
+
+/**
+ * @param stdClass $options
+ * @return bool
+ * @throws comment_exception
+ */
+function mod_assignment_comment_validate(stdClass $options) {
+    global $USER, $DB;
+
+    if ($options->commentarea != 'submission_comments') {
+        throw new comment_exception('invalidcommentarea');
+    }
+    if (!$submission = $DB->get_record('assignment_submissions', array('id'=>$options->itemid))) {
+        throw new comment_exception('invalidcommentitemid');
+    }
+    $context = $options->context;
+    $cm = get_coursemodule_from_id('assignment', $context->instanceid);
+
+    if (empty($cm) or $cm->instance != $submission->assignment) {
+        throw new comment_exception('invalidcontext');
+    }
+
+    if (!has_capability('mod/assignment:grade', $context)) {
+        if (!has_capability('mod/assignment:submit', $context) or ($submission->userid != $USER->id)) {
+            throw new comment_exception('nopermissiontocomment');
+        }
+    }
+
+    return true;
+
+}
+
+/**
+ * @param stdClass $options
+ * @return array
+ * @throws comment_exception
+ */
+function mod_assignment_comment_permissions(stdClass $options) {
+    global $USER, $DB;
+
+    if ($options->commentarea != 'submission_comments') {
+        throw new comment_exception('invalidcommentarea');
+    }
+    if (!$submission = $DB->get_record('assignment_submissions', array('id'=>$options->itemid))) {
+        throw new comment_exception('invalidcommentitemid');
+    }
+    $context = $options->context;
+    $cm = get_coursemodule_from_id('assignment', $context->instanceid);
+
+    if (empty($cm) or $cm->instance != $submission->assignment) {
+        throw new comment_exception('invalidcontext');
+    }
+
+    if (!has_capability('mod/assignment:grade', $context)) {
+        if (!has_capability('mod/assignment:submit', $context) or ($submission->userid != $USER->id)) {
+            return array('view' => false, 'post' => false);
+        }
+    }
+
+    return array('view' => true, 'post' => true);
+}
+
+/**
+ * @param array $comments
+ * @param stdClass $options
+ * @return mixed
+ */
+function mod_assignment_comment_display($comments, $options) {
+    foreach ($comments as $comment) {
+        $comment->content = file_rewrite_pluginfile_urls($comment->content, 'pluginfile.php', $options->context->id,
+            'mod_assignment', 'comments', $comment->id);
+    }
+
+    return $comments;
+}
+
+/**
+ * @param $course
+ * @param $cm
+ * @param $context
+ * @param $filearea
+ * @param $args
+ * @param $forcedownload
+ * @param $options
+ * @return bool
+ */
+function assignment_comments_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, $options) {
+    global $DB, $USER;
+
+    // Make sure this is the comments area.
+    if ($filearea !== 'comments') {
+        return false;
+    }
+
+    // Get the comment record.
+    $commentid = (int)array_shift($args);
+    if (!$comment = $DB->get_record('comments', array('id' => $commentid))) {
+        return false;
+    }
+
+    // Get the submission record.
+    if (!$submission = $DB->get_record('assignment_submissions', array('id' => $comment->itemid))) {
+        return false;
+    }
+
+    // Try to get the file.
+    $fs = get_file_storage();
+    $relativepath = implode('/', $args);
+    $fullpath = "/$context->id/mod_assignment/$filearea/$commentid/$relativepath";
+    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+        return false;
+    }
+
+    // Check permissions.
+    if (!has_capability('mod/assignment:grade', $context)) {
+        if (!has_capability('mod/assignment:submit', $context) or ($submission->userid != $USER->id)) {
+            return false;
+        }
+    }
+
+    // finally send the file
+    send_stored_file($file, 86400, 0, true, $options);
 }

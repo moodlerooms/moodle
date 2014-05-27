@@ -808,6 +808,12 @@ class backup_comments_structure_step extends backup_structure_step {
 
         $comment->annotate_ids('user', 'userid');
 
+        // Conditionally annotate files for comments.
+
+        if ($fileinfo = $this->task->get_comment_file_annotation_info()) {
+            $comment->annotate_files($fileinfo->component, $fileinfo->filearea, 'id');
+        }
+
         // Return the root element (comments)
         return $comments;
     }

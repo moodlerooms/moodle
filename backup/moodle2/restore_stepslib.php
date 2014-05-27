@@ -1954,9 +1954,17 @@ class restore_comments_structure_step extends restore_structure_step {
                 // Only if there is another comment with same context/user/timecreated
                 $params = array('contextid' => $data->contextid, 'userid' => $data->userid, 'timecreated' => $data->timecreated);
                 if (!$DB->record_exists('comments', $params)) {
-                    $DB->insert_record('comments', $data);
+                    $newcommentid = $DB->insert_record('comments', $data);
+                    $this->set_mapping('comments', $data->id, $newcommentid, true);
                 }
             }
+        }
+    }
+
+    public function after_execute() {
+        // Conditionally add related files.
+        if ($fileinfo = $this->task->get_comment_file_annotation_info()) {
+            $this->add_related_files($fileinfo->component, $fileinfo->filearea, 'comments');
         }
     }
 }

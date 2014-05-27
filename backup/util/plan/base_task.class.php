@@ -133,6 +133,15 @@ abstract class base_task implements checksumable, executable, loggable {
     }
 
     /**
+     * Used by the backup_comments_structure_step and restore_comments_structure_step to conditionally handle files.
+     *
+     * @return stdClass|bool false if no file handling, stdClass with component and filearea data members otherwise
+     */
+    public function get_comment_file_annotation_info() {
+        return false;
+    }
+
+    /**
      * Function responsible for building the steps of any task
      * (must set the $built property to true)
      */

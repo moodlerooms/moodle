@@ -215,6 +215,10 @@ class tinymce_texteditor extends texteditor {
         // Remove temporary parameters.
         unset($params['moodle_config']);
 
+        // MR patch to override any params
+        if (!empty($options['tinymceparams'])) {
+            $params = array_merge($params, $options['tinymceparams']);
+        }
         return $params;
     }
 

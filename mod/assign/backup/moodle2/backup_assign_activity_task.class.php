@@ -36,6 +36,16 @@ require_once($CFG->dirroot . '/mod/assign/backup/moodle2/backup_assign_stepslib.
 class backup_assign_activity_task extends backup_activity_task {
 
     /**
+     * @return stdClass
+     */
+    public function get_comment_file_annotation_info() {
+        return (object) array(
+            'component' => 'assignsubmission_comments',
+            'filearea' => 'comments',
+        );
+    }
+
+    /**
      * Define (add) particular settings this activity can have
      */
     protected function define_my_settings() {

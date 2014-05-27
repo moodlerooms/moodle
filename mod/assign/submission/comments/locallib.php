@@ -98,6 +98,12 @@ class assign_submission_comments extends assign_submission_plugin {
         if ($type == 'upload' && $version >= 2011112900) {
             return true;
         }
+
+        // Sam C. - Upgrade comments from Joule Grader supported assignment types.
+        $supported = array('upload', 'uploadsingle', 'online', 'offline');
+        if (in_array($type, $supported)) {
+            return true;
+        }
         return false;
     }
 
@@ -135,8 +141,53 @@ class assign_submission_comments extends assign_submission_plugin {
                             stdClass $oldsubmission,
                             stdClass $submission,
                             & $log) {
+        global $DB;
+        // Sam C. - Upgrade comments from Joule Grader supported assignment types.
+        $supported = array('upload', 'uploadsingle', 'online', 'offline');
+        if (in_array($oldassignment->assignmenttype, $supported)) {
+            // See if there are any comments.
+            $params = array(
+                'contextid' => $oldcontext->id,
+                'commentarea' => 'submission_comments',
+                'itemid' => $oldsubmission->id,
+            );
 
-        if ($oldsubmission->data1 != '') {
+            if ($oldcomments = $DB->get_records('comments', $params)) {
+                try {
+                    $fs = get_file_storage();
+                    foreach ($oldcomments as $oldcomment) {
+                        $newcomment = clone($oldcomment);
+                        unset($newcomment->id);
+                        $newcomment->contextid = $this->assignment->get_context()->id;
+                        $newcomment->itemid    = $submission->id;
+
+                        if ($newid = $DB->insert_record('comments', $newcomment)) {
+                            // Check for and upgrade files related to the comment.
+                            if ($commentfiles = $fs->get_area_files($oldcontext->id, 'mod_assignment', 'comments', $oldcomment->id)) {
+                                foreach ($commentfiles as $commentfile) {
+                                    $newfilerecord = new stdClass();
+                                    $newfilerecord->contextid = $newcomment->contextid;
+                                    $newfilerecord->component = 'assignsubmission_comments';
+                                    $newfilerecord->filearea  = 'comments';
+                                    $newfilerecord->itemid    = $newid;
+
+                                    $fs->create_file_from_storedfile($newfilerecord, $commentfile);
+                                }
+                            }
+                        }
+                    }
+
+                    // Enable this plugin since there are converted comments.
+                    $this->enable();
+                } catch (Exception $e) {
+                    $log .= "Upgrading comments for {$oldsubmission->id} failed: " . $e->getMessage();
+                    return false;
+                }
+            }
+        }
+
+        // Sam C. - Had to change this if statement b/c now all core 2.2 assignment types can be handled by this method.
+        if ($oldassignment->assignmenttype == 'upload' and $oldsubmission->data1 != '') {
 
             // Need to used this init() otherwise it does not have the javascript includes.
             comment::init();

@@ -143,6 +143,8 @@ function assignsubmission_comments_comment_display($comments, $options) {
 
         foreach ($comments as $comment) {
             // Anonymize the comments.
+            // Sam C - Added conditionality to anonymizing comment back.
+            if (($USER->id != $comment->userid) && !has_capability('mod/assign:grade', $assignment->get_context(), $comment->userid)) {
             if (empty($usermappings[$comment->userid])) {
                 // The blind-marking information for this commenter has not been generated; do so now.
                 $anonid = $assignment->get_uniqueid_for_user($comment->userid);
@@ -164,7 +166,14 @@ function assignsubmission_comments_comment_display($comments, $options) {
             $comment->fullname = $usermappings[$comment->userid]->fullname;
             $comment->avatar = $usermappings[$comment->userid]->avatar;
             $comment->profileurl = null;
+            } // Sam C - Added conditionality to anonymizing comment back.
         }
+    }
+
+    // Rewrite file urls.
+    foreach ($comments as $comment) {
+        $comment->content = file_rewrite_pluginfile_urls($comment->content, 'pluginfile.php', $options->context->id,
+            'assignsubmission_comments', 'comments', $comment->id);
     }
 
     return $comments;
@@ -189,3 +198,66 @@ function assignsubmission_comments_comment_add(stdClass $comment, stdClass $para
     }
 }
 
+/**
+ * @param $course
+ * @param $cm
+ * @param $context
+ * @param $filearea
+ * @param $args
+ * @param $forcedownload
+ * @param $options
+ * @return bool
+ */
+function assignsubmission_comments_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, $options) {
+    global $CFG, $DB;
+
+    // Make sure this is the comments area.
+    if ($filearea !== 'comments') {
+        return false;
+    }
+
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return false;
+    }
+
+    require_login($course, false, $cm);
+
+    // Get the comment record.
+    $commentid = (int)array_shift($args);
+    if (!$comment = $DB->get_record('comments', array('id' => $commentid))) {
+        return false;
+    }
+
+    // Get the submission record.
+    if (!$submission = $DB->get_record('assign_submission', array('id' => $comment->itemid))) {
+        return false;
+    }
+
+    require_once($CFG->dirroot . '/mod/assign/locallib.php');
+    $assignment = new assign($context, null, null);
+
+    if ($assignment->get_instance()->id != $submission->assignment) {
+        return false;
+    }
+
+    if ($assignment->get_instance()->teamsubmission &&
+        !$assignment->can_view_group_submission($submission->groupid)) {
+        return false;
+    }
+
+    if (!$assignment->get_instance()->teamsubmission &&
+        !$assignment->can_view_submission($submission->userid)) {
+        return false;
+    }
+
+    // Try to get the file.
+    $fs = get_file_storage();
+    $relativepath = implode('/', $args);
+    $fullpath = "/$context->id/assignsubmission_comments/$filearea/$commentid/$relativepath";
+    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+        return false;
+    }
+
+    // finally send the file
+    send_stored_file($file, 86400, 0, true, $options);
+}

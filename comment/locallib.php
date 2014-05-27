@@ -192,8 +192,13 @@ class comment_manager {
      */
     public function delete_comment($commentid) {
         global $DB;
-        if ($DB->record_exists('comments', array('id' => $commentid))) {
+        if ($comment = $DB->get_record('comments', array('id' => $commentid))) {
+            // Handle deleting files for the comment.
+            $filedeletehelper = new comment_file_delete_helper();
+            $filedeletehelper->delete_files($comment);
+
             $DB->delete_records('comments', array('id' => $commentid));
+
             return true;
         }
         return false;
@@ -207,12 +212,111 @@ class comment_manager {
     public function delete_comments($list) {
         global $DB;
         $ids = explode('-', $list);
+        $filedeletehelper = new comment_file_delete_helper();
         foreach ($ids as $id) {
             $id = (int)$id;
-            if ($DB->record_exists('comments', array('id' => $id))) {
+            if ($comment = $DB->get_record('comments', array('id' => $id))) {
+                $filedeletehelper->delete_files($comment);
                 $DB->delete_records('comments', array('id' => $id));
             }
         }
+
         return true;
+    }
+}
+
+/**
+ * comment_file_delete_helper is helper class to delete files associated with moodle comments.
+ *
+ * It is used by comment_manager->delete(), comment_manager->delete_comments() and comment->delete().
+ *
+ * The static function comment::delete_comments() does not call this b/c calling code takes care of cleaning up
+ * the files associated with the context that the comments belong to.
+ *
+ * @package   core
+ * @copyright 2013 Sam Chaffee
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class comment_file_delete_helper {
+
+    /**
+     * @var file_storage
+     */
+    protected $fs;
+
+    /**
+     * @param file_storage|null $fs
+     */
+    public function __construct($fs = null) {
+        if (!$fs instanceof file_storage) {
+            $fs = get_file_storage();
+        }
+        $this->fs = $fs;
+    }
+
+    /**
+     * @param stdClass $comment
+     * @return bool
+     */
+    public function delete_files($comment) {
+
+        $context = context::instance_by_id($comment->contextid, IGNORE_MISSING);
+        if (empty($context) or $context->contextlevel != CONTEXT_MODULE) {
+            // Currently only 3 activities have comments that will have files associated. Skip any other contextlevel.
+            return false;
+        }
+
+        $component = $this->resolve_comment_component($context);
+
+        if (empty($component)) {
+            // Couldn't resolve the component, skip it.
+            return false;
+        }
+
+        $filecomponent = $this->resolve_file_component($component, $comment);
+        if (empty($filecomponent)) {
+            // Couldn't resolve the file component, skip it.
+            return false;
+        }
+
+        // Delete the comment files.
+        $this->fs->delete_area_files($context->id, $filecomponent, 'comments', $comment->id);
+
+        return true;
+    }
+
+    /**
+     * @param context $context
+     * @return string
+     */
+    protected function resolve_comment_component($context) {
+        $component = '';
+
+        if ($cm = get_coursemodule_from_id('', $context->instanceid)) {
+            $component = 'mod_' . $cm->modname;
+        }
+
+        return $component;
+    }
+
+    /**
+     * @param string $commentcomponent
+     * @param stdClass $comment
+     * @return string
+     */
+    protected function resolve_file_component($commentcomponent, $comment) {
+        // Hard-code for now, later this could be a call-back.
+        $filecomponent = '';
+        if (($commentcomponent == 'mod_assign' or $commentcomponent == 'assignsubmission_comments') and
+                $comment->commentarea == 'submission_comments') {
+
+            $filecomponent = 'assignsubmission_comments';
+        } else if (($commentcomponent == 'mod_assignment' and $comment->commentarea == 'submission_comments') or
+                ($commentcomponent == 'mod_hsuforum' and $comment->commentarea == 'userposts_comments')) {
+
+            $filecomponent = $commentcomponent;
+        }
+
+        return $filecomponent;
     }
 }

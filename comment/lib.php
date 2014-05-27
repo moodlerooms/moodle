@@ -609,7 +609,7 @@ class comment {
      * @param int $format
      * @return stdClass
      */
-    public function add($content, $format = FORMAT_MOODLE) {
+    public function add($content, $format = FORMAT_MOODLE, $postinsertcallback = null) {
         global $CFG, $DB, $USER, $OUTPUT;
         if (!$this->can_post()) {
             throw new comment_exception('nopermissiontocomment');
@@ -630,6 +630,12 @@ class comment {
         $cmt_id = $DB->insert_record('comments', $newcmt);
         if (!empty($cmt_id)) {
             $newcmt->id = $cmt_id;
+
+            // Sam C. Post insert callback for file handling purposes.
+            if (!is_null($postinsertcallback)) {
+                $newcmt = call_user_func($postinsertcallback, $newcmt);
+            }
+
             $newcmt->strftimeformat = get_string('strftimerecent', 'langconfig');
             $newcmt->fullname = fullname($USER);
             $url = new moodle_url('/user/view.php', array('id' => $USER->id, 'course' => $this->courseid));
@@ -648,6 +654,10 @@ class comment {
                                                array($commentlist, $this->comment_param),
                                                $commentlist);
                 $newcmt = $commentlist[0];
+
+                // Send a message.
+                plugin_callback($this->plugintype, $this->pluginname, 'comment', 'message',
+                        array($newcmt, $this->comment_param));
             }
             $newcmt->time = userdate($newcmt->timecreated, $newcmt->strftimeformat);
 
@@ -708,7 +718,14 @@ class comment {
         if (!($USER->id == $comment->userid || !empty($candelete))) {
             throw new comment_exception('nopermissiontocomment');
         }
+
+        // Handle deleting files for the comments.
+        require_once(__DIR__ . '/locallib.php');
+        $filedeletehelper = new comment_file_delete_helper();
+        $filedeletehelper->delete_files($comment);
+
         $DB->delete_records('comments', array('id'=>$commentid));
+
         return true;
     }
 

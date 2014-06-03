@@ -102,10 +102,32 @@
 
         // Check user is allowed to see it.
         if (!$coursesections->uservisible) {
-            // Note: We actually already know they don't have this capability
-            // or uservisible would have been true; this is just to get the
-            // correct error message shown.
-            require_capability('moodle/course:viewhiddensections', $context);
+            // Check if coursesection has conditions affecting availability and if
+            // so, output availability info.
+            if ($coursesections->visible) {
+                echo $OUTPUT->header();
+                $formattedinfo = '';
+                if (!empty($coursesections->availableinfo)) {
+                    $formattedinfo = \core_availability\info::format_info(
+                        $coursesections->availableinfo, $course);
+                    $formattedinfo = html_writer::div($coursesections->availableinfo, 'availabilityinfo');
+                }
+                $sectionname     = get_section_name($course, $coursesections);
+                $strnotavailable = get_string('notavailablecourse', '', $sectionname);
+
+                echo $OUTPUT->container_start('sectionnotavailable');
+                echo html_writer::tag('h2', $strnotavailable);
+                echo $formattedinfo;
+                echo $OUTPUT->continue_button(course_get_url($course));
+                echo $OUTPUT->container_end();
+                echo $OUTPUT->footer();
+                exit(0);
+            } else {
+                // Note: We actually already know they don't have this capability
+                // or uservisible would have been true; this is just to get the
+                // correct error message shown.
+                require_capability('moodle/course:viewhiddensections', $context);
+            }
         }
     }
 

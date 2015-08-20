@@ -28,7 +28,7 @@ namespace mod_lti\local\ltiservice;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/lti/locallib.php');
+require_once(__DIR__ . '/../../../locallib.php');
 
 
 /**
@@ -62,7 +62,7 @@ abstract class resource_base {
     /**
      * Class constructor.
      *
-     * @param mod_lti\local\ltiservice\service_base $service Service instance
+     * @param \mod_lti\local\ltiservice\service_base $service Service instance
      */
     public function __construct($service) {
 
@@ -125,7 +125,7 @@ abstract class resource_base {
     /**
      * Get the resource's service.
      *
-     * @return mod_lti\local\ltiservice\service_base
+     * @return \mod_lti\local\ltiservice\service_base
      */
     public function get_service() {
 

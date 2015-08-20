@@ -43,7 +43,7 @@ class profile extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Class constructor.
      *
-     * @param ltiservice_profile\local\resource\profile $service Service instance
+     * @param \ltiservice_profile\local\resource\profile $service Service instance
      */
     public function __construct($service) {
 
@@ -76,7 +76,7 @@ class profile extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Execute the request for this resource.
      *
-     * @param mod_lti\local\ltiservice\response $response  Response object for this request.
+     * @param \mod_lti\local\ltiservice\response $response  Response object for this request.
      */
     public function execute($response) {
 

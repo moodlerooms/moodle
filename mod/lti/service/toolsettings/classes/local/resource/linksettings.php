@@ -45,7 +45,7 @@ class linksettings extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Class constructor.
      *
-     * @param ltiservice_toolsettings\local\resource\linksettings $service Service instance
+     * @param \ltiservice_toolsettings\local\resource\linksettings $service Service instance
      */
     public function __construct($service) {
 
@@ -63,7 +63,7 @@ class linksettings extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Execute the request for this resource.
      *
-     * @param mod_lti\local\ltiservice\response $response  Response object for this request.
+     * @param \mod_lti\local\ltiservice\response $response  Response object for this request.
      */
     public function execute($response) {
         global $DB, $COURSE;

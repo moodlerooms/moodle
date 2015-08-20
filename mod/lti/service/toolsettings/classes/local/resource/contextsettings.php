@@ -44,7 +44,7 @@ class contextsettings extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Class constructor.
      *
-     * @param ltiservice_toolsettings\local\resource\contextsettings $service Service instance
+     * @param \ltiservice_toolsettings\local\resource\contextsettings $service Service instance
      */
     public function __construct($service) {
 
@@ -62,7 +62,7 @@ class contextsettings extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Execute the request for this resource.
      *
-     * @param mod_lti\local\ltiservice\response $response  Response object for this request.
+     * @param \mod_lti\local\ltiservice\response $response  Response object for this request.
      */
     public function execute($response) {
 

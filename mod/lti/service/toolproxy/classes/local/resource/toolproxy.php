@@ -28,8 +28,8 @@ namespace ltiservice_toolproxy\local\resource;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/lti/OAuth.php');
-require_once($CFG->dirroot . '/mod/lti/TrivialStore.php');
+require_once(__DIR__ . '/../../../../../OAuth.php');
+require_once(__DIR__ . '/../../../../../TrivialStore.php');
 
 // TODO: Switch to core oauthlib once implemented - MDL-30149.
 use moodle\mod\lti as lti;
@@ -47,7 +47,7 @@ class toolproxy extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Class constructor.
      *
-     * @param ltiservice_toolproxy\local\resource\toolproxy $service Service instance
+     * @param \ltiservice_toolproxy\local\resource\toolproxy $service Service instance
      */
     public function __construct($service) {
 
@@ -62,7 +62,7 @@ class toolproxy extends \mod_lti\local\ltiservice\resource_base {
     /**
      * Execute the request for this resource.
      *
-     * @param mod_lti\local\ltiservice\response $response  Response object for this request.
+     * @param \mod_lti\local\ltiservice\response $response  Response object for this request.
      */
     public function execute($response) {
 

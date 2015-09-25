@@ -1911,9 +1911,45 @@ function lti_should_log_request($rawbody) {
  * @param string $rawbody
  */
 function lti_log_request($rawbody) {
+    require_once(__DIR__.'/servicelib.php');
+
     if ($tempdir = make_temp_directory('mod_lti', false)) {
         if ($tempfile = tempnam($tempdir, 'mod_lti_request'.date('YmdHis'))) {
-            file_put_contents($tempfile, $rawbody);
+            $content  = "Request Headers:\n";
+            $content .= print_r(moodle\mod\lti\OAuthUtil::get_headers(), true);
+            $content .= "Request Body:\n";
+            $content .= $rawbody;
+
+            file_put_contents($tempfile, $content);
+            chmod($tempfile, 0644);
+        }
+    }
+}
+
+/**
+ * Log an LTI response
+ *
+ * @param string $responsexml The response XML
+ * @param Exception $e If there was an exception, pass that too
+ */
+function lti_log_response($responsexml, $e = null) {
+    if ($tempdir = make_temp_directory('mod_lti', false)) {
+        if ($tempfile = tempnam($tempdir, 'mod_lti_response'.date('YmdHis'))) {
+            $content = '';
+            if ($e instanceof Exception) {
+                $info = get_exception_info($e);
+
+                $content .= "Exception:\n";
+                $content .= "Message: $info->message\n";
+                $content .= "Debug info: $info->debuginfo\n";
+                $content .= "Backtrace:\n";
+                $content .= format_backtrace($info->backtrace, true);
+                $content .= "\n";
+            }
+            $content .= "Response XML:\n";
+            $content .= $responsexml;
+
+            file_put_contents($tempfile, $content);
             chmod($tempfile, 0644);
         }
     }

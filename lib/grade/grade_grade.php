@@ -245,6 +245,8 @@ class grade_grade extends grade_object {
      * @return bool
      */
     public function is_editable() {
+        global $CFG;
+
         if ($this->is_locked()) {
             return false;
         }
@@ -256,7 +258,7 @@ class grade_grade extends grade_object {
         }
 
         if ($grade_item->is_course_item() or $grade_item->is_category_item()) {
-            return (bool)get_config('moodle', 'grade_overridecat');
+            return !empty($CFG->grade_overridecat);
         }
 
         return true;
@@ -352,9 +354,9 @@ class grade_grade extends grade_object {
 
         // Check to see if the gradebook is frozen. This allows grades to not be altered at all until a user verifies that they
         // wish to update the grades.
-        $gradebookcalculationsfreeze = get_config('core', 'gradebook_calculations_freeze_' . $this->grade_item->courseid);
+        $gradebookcalculationsfreeze = 'gradebook_calculations_freeze_' . $this->grade_item->courseid;
         // Gradebook is frozen, run through old code.
-        if ($gradebookcalculationsfreeze && (int)$gradebookcalculationsfreeze <= 20150627) {
+        if (property_exists($CFG, $gradebookcalculationsfreeze) && (int)$CFG->$gradebookcalculationsfreeze <= 20150627) {
             // Only aggregate items use separate min grades.
             if ($minmaxtouse == GRADE_MIN_MAX_FROM_GRADE_GRADE || $this->grade_item->is_aggregate_item()) {
                 return array($this->rawgrademin, $this->rawgrademax);

@@ -983,8 +983,10 @@ class grade_item extends grade_object {
      * @return bool
      */
     public function is_overridable_item() {
+        global $CFG;
+
         if ($this->is_course_item() or $this->is_category_item()) {
-            $overridable = (bool) get_config('moodle', 'grade_overridecat');
+            $overridable = !empty($CFG->grade_overridecat);
         } else {
             $overridable = false;
         }
@@ -2001,6 +2003,8 @@ class grade_item extends grade_object {
      * @return bool False if an error occurred
      */
     public function use_formula($userid, $params, $useditems, $oldgrade) {
+        global $CFG;
+
         if (empty($userid)) {
             return true;
         }
@@ -2024,13 +2028,15 @@ class grade_item extends grade_object {
 
         // Check to see if the gradebook is frozen. This allows grades to not be altered at all until a user verifies that they
         // wish to update the grades.
-        $gradebookcalculationsfreeze = get_config('core', 'gradebook_calculations_freeze_' . $this->courseid);
+        $gradebookcalculationsfreeze = 'gradebook_calculations_freeze_' . $this->courseid;
+        $gradebookcalculationsfrozen = (property_exists($CFG, $gradebookcalculationsfreeze) &&
+            (int) $CFG->$gradebookcalculationsfreeze <= 20150627);
 
         $rawminandmaxchanged = false;
         // insert final grade - will be needed later anyway
         if ($oldgrade) {
             // Only run through this code if the gradebook isn't frozen.
-            if ($gradebookcalculationsfreeze && (int)$gradebookcalculationsfreeze <= 20150627) {
+            if ($gradebookcalculationsfrozen) {
                 // Do nothing.
             } else {
                 // The grade_grade for a calculated item should have the raw grade maximum and minimum set to the
@@ -2049,7 +2055,7 @@ class grade_item extends grade_object {
             $grade = new grade_grade(array('itemid'=>$this->id, 'userid'=>$userid), false);
             $grade->grade_item =& $this;
             $rawminandmaxchanged = false;
-            if ($gradebookcalculationsfreeze && (int)$gradebookcalculationsfreeze <= 20150627) {
+            if ($gradebookcalculationsfrozen) {
                 // Do nothing.
             } else {
                 // The grade_grade for a calculated item should have the raw grade maximum and minimum set to the
@@ -2087,7 +2093,7 @@ class grade_item extends grade_object {
         }
 
         // Only run through this code if the gradebook isn't frozen.
-        if ($gradebookcalculationsfreeze && (int)$gradebookcalculationsfreeze <= 20150627) {
+        if ($gradebookcalculationsfrozen) {
             // Update in db if changed.
             if (grade_floats_different($grade->finalgrade, $oldfinalgrade)) {
                 $grade->timemodified = time();

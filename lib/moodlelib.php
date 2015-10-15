@@ -1457,6 +1457,12 @@ function get_config($plugin, $name = null) {
             return (string)$forced[$name];
         } else if ($name === 'siteidentifier' && $plugin == 'core') {
             return $siteidentifier;
+        } else if ($iscore && !empty($CFG->version)) {
+            // Instead of hitting cache, read from our $CFG.  Do this only when we know $CFG has been initialized.
+            if (!property_exists($CFG, $name)) {
+                return false;
+            }
+            return $CFG->$name;
         }
     }
 

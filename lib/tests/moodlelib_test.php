@@ -2086,7 +2086,7 @@ class core_moodlelib_testcase extends advanced_testcase {
         $this->assertSame('test 2', get_config('mod_forum', 'phpunit_test_get_config_2'));
         $this->assertSame('test 3', get_config('core', 'phpunit_test_get_config_3'));
         $this->assertSame('test 4', get_config('mod_forum', 'phpunit_test_get_config_4'));
-        $this->assertFalse(get_config('core', 'phpunit_test_get_config_5'));
+        $this->assertSame('test 5', get_config('core', 'phpunit_test_get_config_5'));
         $this->assertFalse(get_config('core', 'phpunit_test_get_config_x'));
         $this->assertFalse(get_config('mod_forum', 'phpunit_test_get_config_x'));
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="admin/tool/log/store/standard/db" VERSION="20140415" COMMENT="XMLDB file for Moodle admin/tool/log/store/standard"
+<XMLDB PATH="admin/tool/log/store/standard/db" VERSION="20160310" COMMENT="XMLDB file for Moodle admin/tool/log/store/standard"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../../../lib/xmldb/xmldb.xsd"
 >
@@ -35,6 +35,7 @@
         <INDEX NAME="timecreated" UNIQUE="false" FIELDS="timecreated"/>
         <INDEX NAME="course-time" UNIQUE="false" FIELDS="courseid, anonymous, timecreated"/>
         <INDEX NAME="user-module" UNIQUE="false" FIELDS="userid, contextlevel, contextinstanceid, crud, edulevel, timecreated"/>
+        <INDEX NAME="course-user-time" UNIQUE="false" FIELDS="courseid, userid, timecreated"/>
       </INDEXES>
     </TABLE>
   </TABLES>

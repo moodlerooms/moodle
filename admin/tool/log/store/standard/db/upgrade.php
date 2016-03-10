@@ -25,7 +25,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 function xmldb_logstore_standard_upgrade($oldversion) {
-    global $CFG;
+    global $CFG, $DB;
+
+    $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
     // Moodle v2.8.0 release upgrade line.
     // Put any upgrade step following this.
@@ -35,6 +37,21 @@ function xmldb_logstore_standard_upgrade($oldversion) {
 
     // Moodle v3.0.0 release upgrade line.
     // Put any upgrade step following this.
+
+    if ($oldversion < 2016031000) {
+
+        // Define index course-user-time (not unique) to be added to logstore_standard_log.
+        $table = new xmldb_table('logstore_standard_log');
+        $index = new xmldb_index('course-user-time', XMLDB_INDEX_NOTUNIQUE, array('courseid', 'userid', 'timecreated'));
+
+        // Conditionally launch add index course-user-time.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Standard savepoint reached.
+        upgrade_plugin_savepoint(true, 2016031000, 'logstore', 'standard');
+    }
 
     return true;
 }
